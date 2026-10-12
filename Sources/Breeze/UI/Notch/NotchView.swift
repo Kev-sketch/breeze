@@ -287,7 +287,7 @@ struct NotchView: View {
     private var commandBarPage: some View {
         CommandBarView(presentation: .island)
             .fixedSize(horizontal: false, vertical: true)
-            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { service.updateCommandBarHeight($0) }
+            .onGeometryChangeCompat(for: CGFloat.self) { $0.size.height } action: { service.updateCommandBarHeight($0) }
             .padding(.top, service.geometry.safeContentTop)
             .frame(width: service.surfaceSize.width, height: service.surfaceSize.height, alignment: .top)
     }
@@ -632,7 +632,7 @@ struct NotchView: View {
         } else if let metric = service.selectedMetric {
             if metric == .fan {
                 NotchFanControlView()
-                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { service.updateFanDetailHeight($0) }
+                    .onGeometryChangeCompat(for: CGFloat.self) { $0.size.height } action: { service.updateFanDetailHeight($0) }
             } else {
                 MetricDetailView(kind: metric)
             }

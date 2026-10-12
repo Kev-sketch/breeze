@@ -249,7 +249,7 @@ struct MediaWorkspaceView: View {
                         content.padding(.trailing, 1)
                     }
                     .fixedSize(horizontal: false, vertical: true)
-                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: {
+                    .onGeometryChangeCompat(for: CGFloat.self) { $0.size.height } action: {
                         onContentHeightChange($0)
                     }
                 }

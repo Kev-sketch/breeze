@@ -341,7 +341,7 @@ struct SwitcherView: View {
                         .onChangeCompat(of: appWindows.map(\.element.id)) { _, _ in
                             revealSelection(in: proxy, animated: true)
                         }
-                        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { _ in
+                        .onGeometryChangeCompat(for: CGFloat.self) { $0.size.width } action: { _ in
                             DispatchQueue.main.async {
                                 revealSelection(in: proxy, animated: false)
                             }
@@ -432,7 +432,7 @@ struct SwitcherView: View {
                     .onChangeCompat(of: appWindows.map(\.element.id)) { _, _ in
                         revealSelection(in: proxy, animated: true)
                     }
-                    .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { _ in
+                    .onGeometryChangeCompat(for: CGFloat.self) { $0.size.width } action: { _ in
                         DispatchQueue.main.async {
                             revealSelection(in: proxy, animated: false)
                         }

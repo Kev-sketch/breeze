@@ -195,7 +195,7 @@ struct NotchSectionSearch: View {
                 .font(.system(size: 12))
                 .focused($searching)
                 .frame(maxWidth: expanded ? maximumFieldWidth : 1)
-                .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { fieldWidth = $0 }
+                .onGeometryChangeCompat(for: CGFloat.self) { $0.size.width } action: { fieldWidth = $0 }
                 .opacity(expanded ? 1 : 0)
                 .accessibilityLabel(text.searchSections)
             if !service.sectionQuery.isEmpty {

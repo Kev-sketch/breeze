@@ -117,7 +117,24 @@ This is the honest boundary of the request. A SwiftUI app **cannot** run on macO
 
 ## 5. Post-port fixes (found by running it)
 
-Not yet populated. Runtime verification requires:
+### 5.1 — `onGeometryChange` Ventura fallback (static triage, 2026-10-12)
+- **Last unguarded macOS-14 family.** A repo-wide sweep showed every other family from §4.2
+  already converted to the `Support/` shims (`onChangeCompat`, `symbol*Compat`,
+  `contentTransitionSymbolReplaceCompat`, `onKeyPressCompat`, `activateCompat`, `CompatDisplayLink`,
+  `ScreenCaptureCompat`, …) or guarded inline (`keyframeAnimator` in `NotchMusicStrip.swift`).
+- **Fix:** `onGeometryChangeCompat(for:_:action:)` in `BackDeployCompat.swift` — a layout-neutral
+  background `GeometryReader` firing on appear + on change; 6 sites converted in `NotchSectionsView`,
+  `NotchView` (×2), `SwitcherView` (×2), `MediaWorkspaceView`. No-op on 14+ (original call runs).
+- **Exonerated by isolated `swiftc -typecheck` probes against the 13.1/13.3 SDKs** (each API alone,
+  target `x86_64-apple-macosx13.0`): `.numericText()` (13.0), `.onExitCommand`, `.dropDestination`,
+  `TextField axis:`, `.defaultAppStorage`, `navigationSplitViewColumnWidth`, `symbolRenderingMode`,
+  `ImageRenderer`, `PasteButton` — all 13.x-native, left untouched. `scrollTarget`/`writeOnly` hits are
+  local names; `scrollBounceBehavior` appears in comments only (its AppKit fallback predates it).
+- **Verified here:** `swiftc -parse` on all 5 touched files; fallback-branch harness typechecks clean
+  on the 13.1 and 13.3 SDKs. **Still pending:** full `./build.sh` on a 26-SDK host (the `#available`
+  14-branches cannot typecheck against the 13.x SDKs on this host).
+
+Runtime verification requires:
 1. A machine with the macOS 26 SDK + Xcode 26 / Swift 5.9+, and
 2. Testing on actual **macOS 13 (Intel and Apple Silicon)** hardware to exercise the lowered floor and
    the universal slices. No runtime bugs have been observed because the full app has not yet been built
