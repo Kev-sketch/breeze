@@ -47,8 +47,8 @@ struct FeatureHubSettings: View {
                     refreshNeverUsed()
                     revealPendingFeatureTarget(using: proxy)
                 }
-                .onChange(of: router.requestID) { _, _ in revealPendingFeatureTarget(using: proxy) }
-                .onChange(of: features.revision) { _, _ in refreshNeverUsed() }
+                .onChangeCompat(of: router.requestID) { _, _ in revealPendingFeatureTarget(using: proxy) }
+                .onChangeCompat(of: features.revision) { _, _ in refreshNeverUsed() }
         }
     }
 

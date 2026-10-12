@@ -45,10 +45,10 @@ struct NotchView: View {
             // The backdrop is a separate, non-interactive hosting view. Claim
             // empty space here so clicks and wheel events stay in this window.
             .onTapGesture { }
-            .onChange(of: reduceTransparency) {
+            .onChangeCompat(of: reduceTransparency) {
                 DispatchQueue.main.async { service.refreshPresentation(animated: false) }
             }
-            .onChange(of: contrast) {
+            .onChangeCompat(of: contrast) {
                 DispatchQueue.main.async { service.refreshPresentation(animated: false) }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)

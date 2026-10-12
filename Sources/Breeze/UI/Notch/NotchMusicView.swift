@@ -89,19 +89,19 @@ struct NotchMusicView: View {
             service.refreshAutomation()
             shuffle.refresh(for: service.playback)
         }
-        .onChange(of: extra) { syncExtras() }
-        .onChange(of: service.playback.map(NotchMusicIdentity.init)) {
+        .onChangeCompat(of: extra) { syncExtras() }
+        .onChangeCompat(of: service.playback.map(NotchMusicIdentity.init)) {
             syncExtras()
             if !preview { shuffle.refresh(for: service.playback) }
         }
         // Shuffle and the playback buttons share one consent, so a grant
         // through the playback buttons also shows on shuffle.
-        .onChange(of: service.automationAvailability?.access) { old, new in
+        .onChangeCompat(of: service.automationAvailability?.access) { old, new in
             if !preview, old != nil, new != nil { shuffle.refresh(for: service.playback) }
         }
-        .onChange(of: features.revision) { syncExtras() }
-        .onChange(of: lyricsEnabled) { syncExtras() }
-        .onChange(of: queueEnabled) { syncExtras() }
+        .onChangeCompat(of: features.revision) { syncExtras() }
+        .onChangeCompat(of: lyricsEnabled) { syncExtras() }
+        .onChangeCompat(of: queueEnabled) { syncExtras() }
         .onDisappear {
             guard !preview else { return }
             NotchService.shared.setMusicDetailsVisible(false)
@@ -433,8 +433,8 @@ private struct NotchMusicTransport: View {
         .buttonStyle(NotchButtonStyle(cornerRadius: height / 2))
         // A second tap before the player answers asks for the state after it,
         // so only the player reaching what was asked ends the early word.
-        .onChange(of: playback.isPlaying) { if playback.isPlaying == requestedPlaying { requestedPlaying = nil } }
-        .onChange(of: playback.track) { requestedPlaying = nil }
+        .onChangeCompat(of: playback.isPlaying) { if playback.isPlaying == requestedPlaying { requestedPlaying = nil } }
+        .onChangeCompat(of: playback.track) { requestedPlaying = nil }
         // A player that never answers leaves the button as it was.
         .task(id: requestedPlaying) {
             guard requestedPlaying != nil else { return }
@@ -513,9 +513,9 @@ struct NotchMusicTimeline: View {
                 .foregroundStyle(.secondary)
             }
             .frame(height: timesBeside ? 14 : 30)
-            .onChange(of: playback.track) { clearScrub() }
-            .onChange(of: playback.commandContext) { clearScrub() }
-            .onChange(of: playback.sampledAt) {
+            .onChangeCompat(of: playback.track) { clearScrub() }
+            .onChangeCompat(of: playback.commandContext) { clearScrub() }
+            .onChangeCompat(of: playback.sampledAt) {
                 if pendingSeek != nil, let scrubPosition,
                    abs(playback.position(at: Date()) - scrubPosition) <= 2 { clearScrub() }
             }

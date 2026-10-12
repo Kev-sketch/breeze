@@ -41,7 +41,7 @@ struct FanControlSection: View {
                 .panelCard()
                 .onAppear { service.panelDidAppear() }
                 .onDisappear { service.panelDidDisappear() }
-                .onChange(of: resume) { _, _ in service.resumePreferenceDidChange() }
+                .onChangeCompat(of: resume) { _, _ in service.resumePreferenceDidChange() }
         }
     }
 

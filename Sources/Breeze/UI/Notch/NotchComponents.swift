@@ -113,7 +113,7 @@ struct NotchStripHold<Value: Equatable, Content: View>: View {
 
     var body: some View {
         content(shows ? value : held)
-            .onChange(of: value) { _, value in
+            .onChangeCompat(of: value) { _, value in
                 if shows { held = value }
             }
     }
@@ -314,7 +314,7 @@ struct NotchRail<Item: Identifiable, Content: View>: View {
                 .onAppear {
                     if let targetColumn { proxy.scrollTo(targetColumn, anchor: .center) }
                 }
-                .onChange(of: targetColumn) { _, target in
+                .onChangeCompat(of: targetColumn) { _, target in
                     guard let target else { return }
                     withAnimation(reduceMotion ? nil : .easeOut(duration: 0.16)) {
                         proxy.scrollTo(target, anchor: .center)

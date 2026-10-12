@@ -178,10 +178,10 @@ struct NotchLockScreenPlayer: View {
         .animation(reduceMotion ? nil : .smooth(duration: 0.5), value: shown)
         // A second tap before the player answers asks for the state after it,
         // so only the player reaching what was asked ends the early word.
-        .onChange(of: music.playback?.isPlaying) {
+        .onChangeCompat(of: music.playback?.isPlaying) {
             if music.playback?.isPlaying == requestedPlaying { requestedPlaying = nil }
         }
-        .onChange(of: music.playback?.track) { requestedPlaying = nil }
+        .onChangeCompat(of: music.playback?.track) { requestedPlaying = nil }
         // A player that never answers leaves the button as it was.
         .task(id: requestedPlaying) {
             guard requestedPlaying != nil else { return }

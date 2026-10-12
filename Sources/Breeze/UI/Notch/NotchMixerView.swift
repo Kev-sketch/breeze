@@ -71,7 +71,7 @@ struct NotchMixerView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .onAppear { mixer.refreshApps() }
         // Escape closes the options before the island.
-        .onChange(of: showingOptions) { _, showing in
+        .onChangeCompat(of: showingOptions) { _, showing in
             guard !preview else { return }
             NotchService.shared.setPageLayer(.mixer, close: showing ? closeOptions : nil)
         }
