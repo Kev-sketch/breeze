@@ -3,11 +3,11 @@
 
 // macOS 13 back-deployment shims.
 //
-// The app targets macOS 14 and uses several macOS-14-only SwiftUI APIs
-// unguarded. This file provides pre-14 equivalents (or graceful no-ops) so the
-// same source builds and runs on macOS 13. Call sites were renamed mechanically
-// (e.g. `.onChange(of:)` -> `.onChangeCompat(of:)`); the shim supplies the
-// behaviour on both OSes.
+// The app's deployment floor is macOS 13.0 (Ventura); the source uses
+// macOS-14-only SwiftUI / AppKit APIs behind the Compat* helpers in this file,
+// which supply the 14 behaviour on 14+ and a Ventura equivalent (or a graceful
+// no-op) on 13. Call sites were renamed mechanically (e.g. `.onChange(of:)` ->
+// `.onChangeCompat(of:)`); the shim supplies the behaviour on both OSes.
 
 import SwiftUI
 import AppKit

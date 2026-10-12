@@ -57,6 +57,9 @@ else
     APP_OPTIMIZATION_FLAGS=(-O)
     BUILD_CONFIGURATION="release"
 fi
+# Shared keychain-password helper (random per-installation, persisted 0600).
+source "${0:A:h}/Tools/breeze-signing.sh"
+
 FAN_HELPER_ID="$APP_BUNDLE_ID.fan-control"
 # Now Playing is read through /usr/bin/perl loading this library; see
 # Sources/NowPlayingAdapter. Staged under Contents/Frameworks, signed on its own.
@@ -65,10 +68,11 @@ NOW_PLAYING_ADAPTER="libBreezeNowPlaying.dylib"
 # --- Universal binary support: Apple Silicon (arm64) + Intel (x86_64) ---
 # Upstream built arm64 only. This port produces a universal (fat) binary so the
 # app runs natively on both Apple Silicon and Intel Macs. The deployment floor is
-# macOS 14.0: the codebase uses 607 macOS-14 APIs unguarded (onChange(of:initial:_:),
-# symbolEffect, contentTransition(.replace), SCScreenshotManager, CADisplayLink,
-# keyframeAnimator, …) across 85 files, so 14.0 is a hard requirement.
-# See PORTING-macos-legacy.md.
+# macOS 13.0 (Ventura) — the codebase's macOS-14-only SwiftUI / AppKit uses
+# (onChange(of:initial:_:), symbolEffect, contentTransition(.symbolEffect(.replace)),
+# SCScreenshotManager, CADisplayLink, keyframeAnimator, …) are covered by explicit
+# fallbacks in Sources/Breeze/Support/ (BackDeployCompat, CompatDisplayLink,
+# ScreenCaptureCompat). See PORTING-macos-legacy.md.
 MACOS_DEPLOYMENT_TARGET=13.0
 ARCHS=(arm64 x86_64)
 NATIVE_TARGET="$(uname -m)-apple-macosx${MACOS_DEPLOYMENT_TARGET}"
@@ -90,7 +94,7 @@ legacy_identity_installed() {
     local probe signed=1
     # A locked keychain still lists its identities but cannot sign with them,
     # and this one is locked after every reboot; unlock it before asking.
-    security unlock-keychain -p breeze-signing \
+    security unlock-keychain -p "$(breeze_kc_pass)" \
         "$HOME/Library/Keychains/breeze-signing.keychain-db" 2>/dev/null || true
     probe="$(mktemp)"
     cp /bin/echo "$probe"

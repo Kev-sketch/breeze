@@ -21,9 +21,11 @@
 # Run this only to get the same permission-preserving behavior for local builds.
 set -euo pipefail
 
+source "${0:A:h}/breeze-signing.sh"
+
 IDENTITY="Breeze Signing"
 KC="$HOME/Library/Keychains/breeze-signing.keychain-db"
-KCPASS="breeze-signing"
+KCPASS="$(breeze_kc_pass)"
 
 # A find-identity listing also names certificates codesign then rejects, and -v
 # excludes every self-signed one; ask codesign itself with a throwaway copy.

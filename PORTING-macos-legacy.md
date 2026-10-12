@@ -83,8 +83,12 @@ build therefore requires a machine with the **macOS 26 SDK + Xcode 26 / Swift 5.
   `captureImage` (24×), `CADisplayLink` (14×), `keyframeAnimator`/`SpringKeyframe`/`CubicKeyframe`,
   `onKeyPress(_:action:)`, `NSApplication.activate(from:options:)`, and more. Lowering the floor to
   13.0 (an earlier mistake in this port) cannot compile against them.
-- **Fix:** keep the floor at **macOS 14.0** (upstream's choice was correct).
-- **Verified:** CI run `38246266910` on the `macos-26` runner produced the 607-error list at floor 13.
+- **Fix:** lower the floor to **macOS 13.0** via the explicit Ventura fallbacks in
+  `Sources/Breeze/Support/` documented in §5.1 and the ADDENDUM above; the intermediate
+  "keep at 14.0" conclusion was superseded once the fallbacks landed.
+- **Verified:** the intermediate 607-error list at floor 13 came from CI run `38246266910`;
+  the floor-13 port is verified green by the later Port macOS 13 build `38264344727` (see
+  §5.1 and §6).
 - **Upstream?** upstream. To reach macOS 13 or below, every one of these sites must be guarded or
   rewritten with a macOS-13 fallback — and several (`SCScreenshotManager`, `CADisplayLink`,
   `symbolEffect`, `keyframeAnimator`) have **no** direct macOS-13 equivalent, so features would degrade.
