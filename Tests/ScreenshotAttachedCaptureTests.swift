@@ -32,6 +32,18 @@ enum ScreenshotAttachedCaptureTests {
         }
     }
     struct SCContentFilter { let desktopIndependentWindow: Window }
+    // Shadows the production back-deploy shim inside this host only: the
+    // extracted compositor builds the mock filter above, so capture is routed
+    // to the recording mock manager instead of the real capture backend.
+    // Failure semantics match (`nil` when the window has no image).
+    enum ScreenCaptureCompat {
+        static func captureImage(filter: SCContentFilter, displayID: CGDirectDisplayID?,
+                                 windowID: CGWindowID?,
+                                 configuration: SCStreamConfiguration) async -> CGImage? {
+            try? await SCScreenshotManager.captureImage(contentFilter: filter,
+                                                        configuration: configuration)
+        }
+    }
     enum SCScreenshotManager {
         struct Request {
             let id: CGWindowID
