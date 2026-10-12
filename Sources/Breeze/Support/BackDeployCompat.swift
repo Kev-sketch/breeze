@@ -107,10 +107,10 @@ extension View {
     }
 }
 
-// MARK: - onGeometryChange(for:action:)  (macOS 14)
+// MARK: - onGeometryChange(for:of:action:)  (macOS 14)
 
 extension View {
-    /// Back-deploys `onGeometryChange(for:action:)` (macOS 14+) to macOS 13.
+    /// Back-deploys `onGeometryChange(for:of:action:)` (macOS 14+) to macOS 13.
     ///
     /// On 13 the view's own size is read through a layout-neutral background
     /// `GeometryReader`; the action fires on appear and whenever the measured
@@ -121,7 +121,7 @@ extension View {
                                              _ transform: @escaping (GeometryProxy) -> V,
                                              action: @escaping (V) -> Void) -> some View {
         if #available(macOS 14.0, *) {
-            onGeometryChange(for: type, transform, action: action)
+            onGeometryChange(for: type, of: transform, action: action)
         } else {
             background {
                 GeometryReader { proxy in
