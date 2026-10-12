@@ -227,12 +227,17 @@ fi
 # -target / -sdk / -o (this function supplies those).
 build_universal() {
     local out="$1"; shift
-    local arch arch_out per_arch=()
+    local arch arch_out per_arch=() logf
     for arch in "${ARCHS[@]}"; do
         arch_out="build/arch/${arch}/$(basename "$out")"
         mkdir -p "$(dirname "$arch_out")"
-        swiftc -target "${arch}-apple-macosx${MACOS_DEPLOYMENT_TARGET}" -sdk "$SDK" \
-            "${SDK_COMPAT_FLAGS[@]}" "$@" -o "$arch_out" || return $?
+        logf="${arch_out}.log"
+        if ! swiftc -target "${arch}-apple-macosx${MACOS_DEPLOYMENT_TARGET}" -sdk "$SDK" \
+                "${SDK_COMPAT_FLAGS[@]}" "$@" -o "$arch_out" >"$logf" 2>&1; then
+            echo "✗ swiftc failed ($arch) — last 120 lines of output:" >&2
+            tail -120 "$logf" >&2
+            return 1
+        fi
         per_arch+=("$arch_out")
     done
     lipo -create -output "$out" "${per_arch[@]}"
@@ -608,15 +613,31 @@ mkdir -p build
 # each file's compiler parses the whole module again: a clean release took a
 # quarter of an hour. Batches share that work and run on every core, and the
 # optimization stays per file, as before.
-# Built as a universal binary (arm64 + x86_64) so it runs on both Apple Silicon
-# and Intel Macs. Each architecture compiles into its own object directory under
-# build/arch/<arch>/; the app's per-file incremental output-file-map is not used
-# on the universal path (each arch is a fresh, complete compile).
-build_universal "build/$EXECUTABLE" \
-    "${APP_OPTIMIZATION_FLAGS[@]}" -enable-batch-mode -j "$(sysctl -n hw.logicalcpu)" \
-    "${VM_STATISTICS_COMPAT_FLAGS[@]}" "${HID_EVENT_SYSTEM_FLAGS[@]}" \
-    "${BUILD_VARIANT_FLAGS[@]}" \
-    "${APP_SOURCES[@]}"
+# Built as a universal binary (arm64 + x86_64). Each architecture is compiled
+# with the same driver flags upstream used (incremental + batch mode + a per-arch
+# output-file-map), then the slices are merged with lipo.
+APP_ARCH_OUTPUTS=()
+for arch in "${ARCHS[@]}"; do
+    app_obj_dir="build/objects/$arch/$EXECUTABLE"
+    mkdir -p "$app_obj_dir"
+    app_ofm="$app_obj_dir/output-file-map.json"
+    write_swift_output_file_map "$app_ofm" "$app_obj_dir" "${APP_SOURCES[@]}"
+    app_arch_out="build/arch/$arch/$EXECUTABLE"
+    mkdir -p "$(dirname "$app_arch_out")"
+    echo "▸ Compiling app slice: $arch"
+    if ! swiftc "${APP_OPTIMIZATION_FLAGS[@]}" -incremental -enable-batch-mode -j "$(sysctl -n hw.logicalcpu)" \
+            -output-file-map "$app_ofm" \
+            -target "${arch}-apple-macosx${MACOS_DEPLOYMENT_TARGET}" -sdk "$SDK" "${SDK_COMPAT_FLAGS[@]}" \
+            "${VM_STATISTICS_COMPAT_FLAGS[@]}" "${HID_EVENT_SYSTEM_FLAGS[@]}" \
+            "${BUILD_VARIANT_FLAGS[@]}" \
+            "${APP_SOURCES[@]}" -o "$app_arch_out" >"build/arch/$arch/app-build.log" 2>&1; then
+        echo "✗ App compile/link failed for $arch — last 120 lines of output:" >&2
+        tail -120 "build/arch/$arch/app-build.log" >&2
+        exit 1
+    fi
+    APP_ARCH_OUTPUTS+=("$app_arch_out")
+done
+lipo -create -output "build/$EXECUTABLE" "${APP_ARCH_OUTPUTS[@]}"
 
 echo "▸ Compiling protected fan helper…"
 build_universal "build/$FAN_HELPER_ID" \
