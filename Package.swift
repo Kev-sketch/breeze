@@ -10,7 +10,7 @@ let package = Package(
     // with 607 availability errors: the code uses macOS-14 APIs unguarded
     // (onChange(of:initial:_:), symbolEffect, SCScreenshotManager, CADisplayLink,
     // keyframeAnimator, …) across 85 files. See PORTING-macos-legacy.md.
-    platforms: [.macOS(.v14)],
+    platforms: [.macOS(.v13)],
     targets: [
         .systemLibrary(
             name: "HIDEventSystem",

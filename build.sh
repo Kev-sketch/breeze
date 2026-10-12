@@ -69,7 +69,7 @@ NOW_PLAYING_ADAPTER="libBreezeNowPlaying.dylib"
 # symbolEffect, contentTransition(.replace), SCScreenshotManager, CADisplayLink,
 # keyframeAnimator, …) across 85 files, so 14.0 is a hard requirement.
 # See PORTING-macos-legacy.md.
-MACOS_DEPLOYMENT_TARGET=14.0
+MACOS_DEPLOYMENT_TARGET=13.0
 ARCHS=(arm64 x86_64)
 NATIVE_TARGET="$(uname -m)-apple-macosx${MACOS_DEPLOYMENT_TARGET}"
 TARGET="arm64-apple-macosx${MACOS_DEPLOYMENT_TARGET}"
@@ -631,8 +631,10 @@ for arch in "${ARCHS[@]}"; do
             "${VM_STATISTICS_COMPAT_FLAGS[@]}" "${HID_EVENT_SYSTEM_FLAGS[@]}" \
             "${BUILD_VARIANT_FLAGS[@]}" \
             "${APP_SOURCES[@]}" -o "$app_arch_out" >"build/arch/$arch/app-build.log" 2>&1; then
-        echo "✗ App compile/link failed for $arch — last 120 lines of output:" >&2
-        tail -120 "build/arch/$arch/app-build.log" >&2
+        echo "✗ App compile/link failed for $arch — distinct errors:" >&2
+        grep -E "error:" "build/arch/$arch/app-build.log" | sort -u | head -300 >&2
+        echo "--- (last 40 lines) ---" >&2
+        tail -40 "build/arch/$arch/app-build.log" >&2
         exit 1
     fi
     APP_ARCH_OUTPUTS+=("$app_arch_out")

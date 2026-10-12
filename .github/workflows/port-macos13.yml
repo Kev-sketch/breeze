@@ -1,0 +1,24 @@
+name: Port macOS 13 build
+
+# Builds the macOS-13 back-deployment branch on the macOS 26 runner and prints
+# the remaining availability errors, so the port can be driven iteratively.
+on:
+  workflow_dispatch:
+  push:
+    branches: [port/macos13]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build at floor 13
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Build (floor 13)
+        run: ./build.sh
