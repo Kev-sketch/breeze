@@ -150,8 +150,7 @@ struct CleanerView: View {
             Image(systemName: "sparkles")
                 .font(.system(size: size, weight: .light))
                 .foregroundStyle(.secondary)
-                .symbolEffect(.variableColor.iterative.reversing,
-                              options: .repeating, isActive: animating)
+                .symbolVariableColorCompat(reversing: true, isActive: animating)
         }
     }
 

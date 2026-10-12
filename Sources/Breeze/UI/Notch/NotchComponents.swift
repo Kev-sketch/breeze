@@ -153,7 +153,7 @@ struct NotchIconButton: View {
             Image(systemName: symbol)
                 .font(.system(size: 12, weight: .medium))
                 .foregroundStyle(selected ? .white : .white.opacity(0.55))
-                .contentTransition(.symbolEffect(.replace))
+                .contentTransitionSymbolReplaceCompat()
                 .animation(reduceMotion ? nil : .smooth(duration: 0.24), value: symbol)
                 .frame(width: 28, height: 28)
                 .background(.white.opacity(selected ? 0.12 : 0),

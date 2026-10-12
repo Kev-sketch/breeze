@@ -1004,11 +1004,10 @@ struct CommandBarView: View {
             Toggle(item.name, isOn: uninstallIncludeBinding(item))
                 .labelsHidden()
                 .toggleStyle(.checkbox)
-                .focusable(interactions: .edit)
-                .onKeyPress(.space) {
+                .focusableEditCompat()
+                .onKeyPressCompat(.space) {
                     let included = uninstaller.items.first(where: { $0.id == item.id })?.include ?? false
                     uninstaller.setInclude(!included, for: item.id)
-                    return .handled
                 }
                 .disabled(uninstaller.isRemoving)
             Image(nsImage: NSWorkspace.shared.icon(forFile: item.url.path))
