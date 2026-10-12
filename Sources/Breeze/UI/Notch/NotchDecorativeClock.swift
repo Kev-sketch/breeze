@@ -16,7 +16,7 @@ final class NotchDecorativeClock {
     static let rate: Float = 30
 
     private let step: (CFTimeInterval) -> Void
-    private var link: CADisplayLink?
+    private var link: CompatDisplayLink?
 
     /// `step` receives the time the frame being prepared will show at.
     init(step: @escaping (CFTimeInterval) -> Void) {
@@ -27,12 +27,12 @@ final class NotchDecorativeClock {
 
     /// The display link while it runs, so tests can check its rate and that
     /// stopping takes it off the run loop.
-    var displayLink: CADisplayLink? { link }
+    var displayLink: CompatDisplayLink? { link }
 
     /// Steps in time with the display that shows `view`.
     func start(in view: NSView) {
         guard link == nil else { return }
-        let link = view.displayLink(target: Target(clock: self), selector: #selector(Target.fire(_:)))
+        let link = view.compatDisplayLink(target: Target(clock: self), selector: #selector(Target.fire(_:)))
         link.preferredFrameRateRange = CAFrameRateRange(minimum: Self.rate / 2, maximum: Self.rate,
                                                         preferred: Self.rate)
         link.add(to: .main, forMode: .common)
@@ -51,7 +51,7 @@ final class NotchDecorativeClock {
     private final class Target: NSObject {
         weak var clock: NotchDecorativeClock?
         init(clock: NotchDecorativeClock) { self.clock = clock }
-        @objc func fire(_ link: CADisplayLink) { clock?.step(link.targetTimestamp) }
+        @objc func fire(_ link: CompatDisplayLink) { clock?.step(link.targetTimestamp) }
     }
 
     /// Where a swing to and fro stands at `phase`, counted in half cycles: 0

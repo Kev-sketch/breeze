@@ -25,7 +25,7 @@ struct NotchView: View {
             // own departure. A companion that stays to react is drawn over the
             // new strip where it stood, so the swap under it is left
             // unanimated: two of it crossfading in one place would dim it.
-            .transaction(value: service.compactActivity) { transaction in
+            .transactionCompat(value: service.compactActivity) { transaction in
                 guard !reduceMotion, !service.mascotLingers else { return }
                 let arrives = service.compactActivity != nil && service.mascotJustRested
                 let leaves = service.compactActivity == nil && service.mascotAtRest
@@ -45,10 +45,10 @@ struct NotchView: View {
             // The backdrop is a separate, non-interactive hosting view. Claim
             // empty space here so clicks and wheel events stay in this window.
             .onTapGesture { }
-            .onChange(of: reduceTransparency) {
+            .onChangeCompat(of: reduceTransparency) {
                 DispatchQueue.main.async { service.refreshPresentation(animated: false) }
             }
-            .onChange(of: contrast) {
+            .onChangeCompat(of: contrast) {
                 DispatchQueue.main.async { service.refreshPresentation(animated: false) }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -186,7 +186,7 @@ struct NotchView: View {
                         activityStrip(activity, size: strip)
                             .frame(width: strip.width, height: layout.headerHeight, alignment: .top)
                             .id(NotchPickedStrip(activity: activity, companion: service.compactCompanion))
-                            .transition(.blurReplace)
+                            .transitionBlurReplaceCompat()
                     }
                     .frame(height: layout.headerHeight, alignment: .top)
                     NotchActivityPicker(activities: service.compactActivities, selected: activity,
@@ -287,7 +287,7 @@ struct NotchView: View {
     private var commandBarPage: some View {
         CommandBarView(presentation: .island)
             .fixedSize(horizontal: false, vertical: true)
-            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { service.updateCommandBarHeight($0) }
+            .onGeometryChangeCompat(for: CGFloat.self) { $0.size.height } action: { service.updateCommandBarHeight($0) }
             .padding(.top, service.geometry.safeContentTop)
             .frame(width: service.surfaceSize.width, height: service.surfaceSize.height, alignment: .top)
     }
@@ -632,7 +632,7 @@ struct NotchView: View {
         } else if let metric = service.selectedMetric {
             if metric == .fan {
                 NotchFanControlView()
-                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { service.updateFanDetailHeight($0) }
+                    .onGeometryChangeCompat(for: CGFloat.self) { $0.size.height } action: { service.updateFanDetailHeight($0) }
             } else {
                 MetricDetailView(kind: metric)
             }

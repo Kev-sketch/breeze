@@ -2218,7 +2218,8 @@ enum PointerInputFeatureTests {
                "the exception list the tap consults for the drag stays on screen while either switch is on")
         var spacesSwitchOffDropsBinding = false
         for (index, line) in mouseSettingsLines.enumerated()
-        where isCodeLine(line) && line.contains(".onChange(of: spacesEnabled)") {
+        where isCodeLine(line) && (line.contains(".onChange(of: spacesEnabled)")
+                || line.contains(".onChangeCompat(of: spacesEnabled)")) {
             let window = mouseSettingsLines[index...].prefix(12)
             let stop = window.firstIndex {
                 $0.trimmingCharacters(in: .whitespaces) == "stopSpacesCapture()"
@@ -3560,7 +3561,8 @@ enum PointerInputFeatureTests {
                     && source.contains("tapCreationRetryWork?.cancel()"),
                    "\(name) retries tap creation once instead of polling forever")
         }
-        suite.expect(smoothSchedulerCode.contains("screen.displayLink(")
+        suite.expect((smoothSchedulerCode.contains("screen.displayLink(")
+                        || smoothSchedulerCode.contains("screen.compatDisplayLink("))
                 && smoothSchedulerCode.contains("displayLink.add(to: .main, forMode: .common)")
                 && smoothSchedulerCode.contains("sender.timestamp")
                 && smoothSchedulerCode.contains("sender.duration"),

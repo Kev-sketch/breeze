@@ -991,7 +991,7 @@ private final class NotchBackdropTick: NSObject {
     init(canvas: NotchCanvas) { self.canvas = canvas }
     /// SwiftUI's drawing of what is set now reaches the screen the frame after
     /// the one being prepared, so the material aims one frame further.
-    @objc func fire(_ sender: CADisplayLink) {
+    @objc func fire(_ sender: CompatDisplayLink) {
         canvas?.advanceBackdrop(to: sender.targetTimestamp + (sender.targetTimestamp - sender.timestamp))
     }
 }
@@ -1005,7 +1005,7 @@ private final class NotchCanvas: NSView {
     /// the material stayed a frame at its old place when the window grew to
     /// open, cutting the island in half.
     private var stage = CGSize.zero
-    private(set) var backdropDisplayLink: CADisplayLink?
+    private(set) var backdropDisplayLink: CompatDisplayLink?
     private lazy var backdropTick = NotchBackdropTick(canvas: self)
     private(set) var backdropTicks = 0
     private let activationButton = NotchActivationButton()
@@ -1345,7 +1345,7 @@ private final class NotchCanvas: NSView {
         if let from { setBackdropContour(inCanvas(from)) }
         // Only the material follows the display link; content layout and the
         // native window remain fixed for the duration of the animation.
-        let link = displayLink(target: backdropTick, selector: #selector(NotchBackdropTick.fire(_:)))
+        let link = compatDisplayLink(target: backdropTick, selector: #selector(NotchBackdropTick.fire(_:)))
         backdropDisplayLink = link
         link.add(to: .main, forMode: .common)
         if let borderAnimation = animation.copy() as? CAAnimation {

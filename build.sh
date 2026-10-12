@@ -43,7 +43,7 @@ for arg in "$@"; do
 done
 
 if (( DEV )); then
-    APP_NAME="Breeze (Developer)"
+    APP_NAME="Breeze (most recent version)"
     EXECUTABLE="BreezeDeveloper"
     APP_BUNDLE_ID="com.kevsketch.breeze.utils.dev"
     BUILD_VARIANT_FLAGS=(-D BREEZE_DEVELOPMENT)
@@ -57,6 +57,9 @@ else
     APP_OPTIMIZATION_FLAGS=(-O)
     BUILD_CONFIGURATION="release"
 fi
+# Shared keychain-password helper (random per-installation, persisted 0600).
+source "${0:A:h}/Tools/breeze-signing.sh"
+
 FAN_HELPER_ID="$APP_BUNDLE_ID.fan-control"
 # Now Playing is read through /usr/bin/perl loading this library; see
 # Sources/NowPlayingAdapter. Staged under Contents/Frameworks, signed on its own.
@@ -65,11 +68,12 @@ NOW_PLAYING_ADAPTER="libBreezeNowPlaying.dylib"
 # --- Universal binary support: Apple Silicon (arm64) + Intel (x86_64) ---
 # Upstream built arm64 only. This port produces a universal (fat) binary so the
 # app runs natively on both Apple Silicon and Intel Macs. The deployment floor is
-# macOS 14.0: the codebase uses 607 macOS-14 APIs unguarded (onChange(of:initial:_:),
-# symbolEffect, contentTransition(.replace), SCScreenshotManager, CADisplayLink,
-# keyframeAnimator, …) across 85 files, so 14.0 is a hard requirement.
-# See PORTING-macos-legacy.md.
-MACOS_DEPLOYMENT_TARGET=14.0
+# macOS 13.0 (Ventura) — the codebase's macOS-14-only SwiftUI / AppKit uses
+# (onChange(of:initial:_:), symbolEffect, contentTransition(.symbolEffect(.replace)),
+# SCScreenshotManager, CADisplayLink, keyframeAnimator, …) are covered by explicit
+# fallbacks in Sources/Breeze/Support/ (BackDeployCompat, CompatDisplayLink,
+# ScreenCaptureCompat). See PORTING-macos-legacy.md.
+MACOS_DEPLOYMENT_TARGET=13.0
 ARCHS=(arm64 x86_64)
 NATIVE_TARGET="$(uname -m)-apple-macosx${MACOS_DEPLOYMENT_TARGET}"
 TARGET="arm64-apple-macosx${MACOS_DEPLOYMENT_TARGET}"
@@ -90,7 +94,7 @@ legacy_identity_installed() {
     local probe signed=1
     # A locked keychain still lists its identities but cannot sign with them,
     # and this one is locked after every reboot; unlock it before asking.
-    security unlock-keychain -p breeze-signing \
+    security unlock-keychain -p "$(breeze_kc_pass)" \
         "$HOME/Library/Keychains/breeze-signing.keychain-db" 2>/dev/null || true
     probe="$(mktemp)"
     cp /bin/echo "$probe"
@@ -256,7 +260,7 @@ discard_test_preferences() {
     # two quiet checks, but keep a hard limit so persistent failures still fail CI.
     for attempt in {1..10}; do
         for name in "breeze.tests." "com.kevsketch.breeze.tests."; do
-            rm -f "$preferences"/$name*.plist(N)
+            rm -f "$preferences/$name*.plist"
         done
         rm -f "$preferences/metrics-tests.plist"
         sleep 0.2
@@ -281,6 +285,9 @@ if (( TEST )); then
     TEST_OBJECT_DIR="build/objects/tests"
     mkdir -p "$TEST_OBJECT_DIR"
     TEST_SOURCES=(
+        Sources/Breeze/Support/BackDeployCompat.swift
+        Sources/Breeze/Support/CompatDisplayLink.swift
+        Sources/Breeze/Support/ScreenCaptureCompat.swift
         Sources/Breeze/Services/Media/MediaSupport.swift
         Sources/Breeze/Core/QuitProtectionSupport.swift
         Sources/Breeze/Core/QuitProtectionStrings.swift
@@ -631,8 +638,10 @@ for arch in "${ARCHS[@]}"; do
             "${VM_STATISTICS_COMPAT_FLAGS[@]}" "${HID_EVENT_SYSTEM_FLAGS[@]}" \
             "${BUILD_VARIANT_FLAGS[@]}" \
             "${APP_SOURCES[@]}" -o "$app_arch_out" >"build/arch/$arch/app-build.log" 2>&1; then
-        echo "✗ App compile/link failed for $arch — last 120 lines of output:" >&2
-        tail -120 "build/arch/$arch/app-build.log" >&2
+        echo "✗ App compile/link failed for $arch — distinct errors:" >&2
+        grep -E "error:" "build/arch/$arch/app-build.log" | sort -u | head -300 >&2
+        echo "--- (last 40 lines) ---" >&2
+        tail -40 "build/arch/$arch/app-build.log" >&2
         exit 1
     fi
     APP_ARCH_OUTPUTS+=("$app_arch_out")
@@ -706,7 +715,7 @@ cp Resources/com.kevsketch.breeze.utils.fan-control.plist \
     "$STAGE/Contents/Library/LaunchDaemons/$FAN_HELPER_ID.plist"
 cp Resources/Info.plist "$STAGE/Contents/Info.plist"
 cp CHANGELOG.md "$STAGE/Contents/Resources/CHANGELOG.md"
-for lproj in Resources/*.lproj(N); do
+for lproj in Resources/*.lproj; do
     cp -R "$lproj" "$STAGE/Contents/Resources/"
 done
 if (( DEV )); then

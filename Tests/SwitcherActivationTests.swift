@@ -29,6 +29,10 @@ enum SwitcherActivationTests {
             return true
         }
         @discardableResult func activate(options: NSApplication.ActivationOptions) -> Bool { false }
+        @discardableResult func activateCompat(from source: App,
+                                               options: NSApplication.ActivationOptions = []) -> Bool {
+            activate(from: source, options: options)
+        }
     }
     enum Handoff {
         static func yield(to app: App) { events.append("yield:\(app.processIdentifier)") }

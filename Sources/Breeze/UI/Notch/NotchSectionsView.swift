@@ -27,7 +27,7 @@ struct NotchSectionsView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-        .onChange(of: sections) { _, visible in
+        .onChangeCompat(of: sections) { _, visible in
             if !visible.contains(where: { $0 == service.highlightedSection }) {
                 service.highlightedSection = visible.first
             }
@@ -195,7 +195,7 @@ struct NotchSectionSearch: View {
                 .font(.system(size: 12))
                 .focused($searching)
                 .frame(maxWidth: expanded ? maximumFieldWidth : 1)
-                .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { fieldWidth = $0 }
+                .onGeometryChangeCompat(for: CGFloat.self) { $0.size.width } action: { fieldWidth = $0 }
                 .opacity(expanded ? 1 : 0)
                 .accessibilityLabel(text.searchSections)
             if !service.sectionQuery.isEmpty {

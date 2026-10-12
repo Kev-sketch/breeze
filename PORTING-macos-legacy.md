@@ -1,4 +1,4 @@
-# PORTING-macos-legacy.md — Breeze on macOS (universal: Intel + Apple Silicon, floor macOS 14)
+# PORTING-macos-legacy.md — Breeze on macOS (universal: Intel + Apple Silicon, floor macOS 13)
 
 > Legacy-OS port produced with the `legacy-os-port` skill. This file is the port's memory: it lets a
 > future session pick up the work without re-discovering anything.
@@ -11,12 +11,19 @@
 > `SpringKeyframe` / `CubicKeyframe`, `onKeyPress(_:action:)`, `NSApplication.activate(from:options:)`,
 > and more. **The floor is macOS 14.0 (Sonoma)** — a hard requirement of the code. The earlier
 > "SMAppService is the youngest API (13.0)" analysis was incomplete; it missed these.
+>
+> **ADDENDUM (2026-10-12, branch `port/macos13`).** The floor is moving to **macOS 13.0 (Ventura)**
+> after all — via explicit Ventura fallbacks (`Sources/Breeze/Support/BackDeployCompat.swift`,
+> `CompatDisplayLink.swift`, `ScreenCaptureCompat.swift`) instead of the naive floor-lowering that
+> failed above. `Package.swift`, `build.sh` and `Info.plist` now declare 13.0; this doc's older
+> "floor is 14.0" statements are historical.
 
 ## 1. Summary
 
 - **Upstream:** https://github.com/vorssaint/vorssaint-utils
 - **Port target:** a **universal binary (arm64 + x86_64)** so the app runs natively on **both Apple
-  Silicon and Intel Macs**. Deployment floor: **macOS 14.0 (Sonoma)**, unchanged from upstream.
+  Silicon and Intel Macs**. Deployment floor: **macOS 13.0 (Ventura)** via explicit fallbacks
+  (see the ADDENDUM above and §5.1).
 - **Status:** the port builds a universal binary; the full app build is verified by CI on the
   `macos-26` GitHub runner (see `.github/workflows/breeze-release.yml`).
 - **What is verified, and how:**
@@ -51,8 +58,8 @@ build therefore requires a machine with the **macOS 26 SDK + Xcode 26 / Swift 5.
 | Area | Upstream | This port |
 |---|---|---|
 | Architecture | `arm64` only (`TARGET="arm64-apple-macosx14.0"`) | **universal `arm64` + `x86_64`** via a `build_universal` helper that compiles each arch and merges with `lipo -create` |
-| Deployment target | macOS 14.0 | macOS 14.0 (unchanged — see the correction above) |
-| Test target | `arm64` (would not run on Intel) | native host arch (`NATIVE_TARGET="$(uname -m)-apple-macosx14.0"`) so tests run on either architecture |
+| Deployment target | macOS 14.0 | **macOS 13.0** (Ventura fallbacks in `Sources/Breeze/Support/`; see §5.1) |
+| Test target | `arm64` (would not run on Intel) | native host arch (`NATIVE_TARGET="$(uname -m)-apple-macosx${MACOS_DEPLOYMENT_TARGET}"`) so tests run on either architecture |
 | Toolchain / language level | `swift-tools-version:5.9` | unchanged (the 26-SDK host supplies Swift ≥ 5.9) |
 | Dependencies | none external (SPM); two C system-library shims (`HIDEventSystem`, `VMStatisticsCompat`) | unchanged |
 
@@ -76,8 +83,12 @@ build therefore requires a machine with the **macOS 26 SDK + Xcode 26 / Swift 5.
   `captureImage` (24×), `CADisplayLink` (14×), `keyframeAnimator`/`SpringKeyframe`/`CubicKeyframe`,
   `onKeyPress(_:action:)`, `NSApplication.activate(from:options:)`, and more. Lowering the floor to
   13.0 (an earlier mistake in this port) cannot compile against them.
-- **Fix:** keep the floor at **macOS 14.0** (upstream's choice was correct).
-- **Verified:** CI run `38246266910` on the `macos-26` runner produced the 607-error list at floor 13.
+- **Fix:** lower the floor to **macOS 13.0** via the explicit Ventura fallbacks in
+  `Sources/Breeze/Support/` documented in §5.1 and the ADDENDUM above; the intermediate
+  "keep at 14.0" conclusion was superseded once the fallbacks landed.
+- **Verified:** the intermediate 607-error list at floor 13 came from CI run `38246266910`;
+  the floor-13 port is verified green by the later Port macOS 13 build `38264344727` (see
+  §5.1 and §6).
 - **Upstream?** upstream. To reach macOS 13 or below, every one of these sites must be guarded or
   rewritten with a macOS-13 fallback — and several (`SCScreenshotManager`, `CADisplayLink`,
   `symbolEffect`, `keyframeAnimator`) have **no** direct macOS-13 equivalent, so features would degrade.
@@ -111,7 +122,24 @@ This is the honest boundary of the request. A SwiftUI app **cannot** run on macO
 
 ## 5. Post-port fixes (found by running it)
 
-Not yet populated. Runtime verification requires:
+### 5.1 — `onGeometryChange` Ventura fallback (static triage, 2026-10-12)
+- **Last unguarded macOS-14 family.** A repo-wide sweep showed every other family from §4.2
+  already converted to the `Support/` shims (`onChangeCompat`, `symbol*Compat`,
+  `contentTransitionSymbolReplaceCompat`, `onKeyPressCompat`, `activateCompat`, `CompatDisplayLink`,
+  `ScreenCaptureCompat`, …) or guarded inline (`keyframeAnimator` in `NotchMusicStrip.swift`).
+- **Fix:** `onGeometryChangeCompat(for:_:action:)` in `BackDeployCompat.swift` — a layout-neutral
+  background `GeometryReader` firing on appear + on change; 6 sites converted in `NotchSectionsView`,
+  `NotchView` (×2), `SwitcherView` (×2), `MediaWorkspaceView`. No-op on 14+ (original call runs).
+- **Exonerated by isolated `swiftc -typecheck` probes against the 13.1/13.3 SDKs** (each API alone,
+  target `x86_64-apple-macosx13.0`): `.numericText()` (13.0), `.onExitCommand`, `.dropDestination`,
+  `TextField axis:`, `.defaultAppStorage`, `navigationSplitViewColumnWidth`, `symbolRenderingMode`,
+  `ImageRenderer`, `PasteButton` — all 13.x-native, left untouched. `scrollTarget`/`writeOnly` hits are
+  local names; `scrollBounceBehavior` appears in comments only (its AppKit fallback predates it).
+- **Verified here:** `swiftc -parse` on all 5 touched files; fallback-branch harness typechecks clean
+  on the 13.1 and 13.3 SDKs. **Still pending:** full `./build.sh` on a 26-SDK host (the `#available`
+  14-branches cannot typecheck against the 13.x SDKs on this host).
+
+Runtime verification requires:
 1. A machine with the macOS 26 SDK + Xcode 26 / Swift 5.9+, and
 2. Testing on actual **macOS 13 (Intel and Apple Silicon)** hardware to exercise the lowered floor and
    the universal slices. No runtime bugs have been observed because the full app has not yet been built
@@ -122,10 +150,11 @@ Not yet populated. Runtime verification requires:
 - `zsh -n build.sh` → syntax OK.
 - Universal mechanism: standalone `swiftc` (arm64 + x86_64) + `lipo -create` → fat `x86_64 arm64`
   Mach-O that runs on this Intel host. (Artefact: `/tmp/univtest/vt_universal`.)
-- `Package.swift` floor → `.macOS(.v14)` (the correct hard floor; see the correction above).
-- **Pending on a 26-SDK host:** full `./build.sh` compile/typecheck; running the universal `.app` on
-  macOS 13 Intel and macOS 13/14 Apple Silicon; exercising menu-bar features, the fan-control daemon
-  (`SMAppService` registration on 13+), and the Now Playing adapter.
+- `Package.swift` floor → `.macOS(.v13)`; floor-13 CI build green
+  ([Port macOS 13 build #38264344727](https://github.com/Kev-sketch/breeze/actions/runs/38264344727)).
+- **Pending:** running the universal `.app` on macOS 13 Intel and macOS 13/14 Apple Silicon;
+  exercising menu-bar features, the fan-control daemon (`SMAppService` registration on 13+),
+  and the Now Playing adapter.
 
 ## 7. How to build
 
@@ -152,5 +181,5 @@ Not yet populated. Runtime verification requires:
 - **Adaptive icon catalog** needs Xcode 26's `actool` and is skipped on CLT builds (falls back to
   `AppIcon.icns`) — cosmetic only.
 - **macOS 10.0–10.14 are unreachable** for this SwiftUI codebase (see §4.4). The port envelope is
-  macOS 14 → current, universal (Intel + Apple Silicon).
+  macOS 13 → current, universal (Intel + Apple Silicon).
 - Full end-to-end runtime verification is pending a 26-SDK host and macOS 13 hardware (see §5).

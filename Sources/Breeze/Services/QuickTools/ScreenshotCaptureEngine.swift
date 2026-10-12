@@ -50,15 +50,18 @@ enum ScreenshotCaptureEngine {
     final class RegionCapture: @unchecked Sendable {
         private let filter: SCContentFilter
         private let configuration: SCStreamConfiguration
+        private let displayID: CGDirectDisplayID
 
-        init(filter: SCContentFilter, configuration: SCStreamConfiguration) {
+        init(filter: SCContentFilter, configuration: SCStreamConfiguration,
+             displayID: CGDirectDisplayID) {
             self.filter = filter
             self.configuration = configuration
+            self.displayID = displayID
         }
 
         func image() async -> CGImage? {
-            try? await SCScreenshotManager.captureImage(contentFilter: filter,
-                                                       configuration: configuration)
+            await ScreenCaptureCompat.captureImage(filter: filter, displayID: displayID,
+                                                   windowID: nil, configuration: configuration)
         }
     }
 
@@ -94,7 +97,8 @@ enum ScreenshotCaptureEngine {
         configuration.height = max(1, Int(clamped.height))
         configuration.showsCursor = includePointer
         configuration.colorSpaceName = CGColorSpace.sRGB
-        return RegionCapture(filter: filter, configuration: configuration)
+        return RegionCapture(filter: filter, configuration: configuration,
+                             displayID: display.displayID)
     }
 
     /// Captures every given screen, keyed by display id. Screens that fail
@@ -158,8 +162,8 @@ enum ScreenshotCaptureEngine {
         configuration.height = max(1, Int((CGFloat(display.height) * scale).rounded()))
         configuration.showsCursor = includePointer
         configuration.colorSpaceName = CGColorSpace.sRGB
-        return try? await SCScreenshotManager.captureImage(contentFilter: filter,
-                                                           configuration: configuration)
+        return await ScreenCaptureCompat.captureImage(filter: filter, displayID: display.displayID,
+                                                      windowID: nil, configuration: configuration)
     }
 
     /// The window's own buffer via the window server (same capture the
@@ -224,12 +228,13 @@ enum ScreenshotCaptureEngine {
         // its automatic setting may render below the window's own scale and
         // stretch the result to the size asked for. The recorder already asks
         // for the best one; this is the screenshot tool's only window stream.
-        configuration.captureResolution = .best
+        if #available(macOS 14.0, *) { configuration.captureResolution = .best }
         configuration.showsCursor = false
         configuration.colorSpaceName = CGColorSpace.sRGB
         let filter = SCContentFilter(desktopIndependentWindow: window)
-        let capture = try? await SCScreenshotManager.captureImage(contentFilter: filter,
-                                                                  configuration: configuration)
+        let capture = await ScreenCaptureCompat.captureImage(filter: filter, displayID: nil,
+                                                             windowID: window.windowID,
+                                                             configuration: configuration)
         return (capture ?? clippedFallback).map { ($0, scale) }
     }
 
@@ -343,13 +348,20 @@ enum ScreenshotCaptureEngine {
         else { return nil }
         let filter = SCContentFilter(display: display, including: windows)
         let configuration = SCStreamConfiguration()
-        let pixelScale = CGFloat(filter.pointPixelScale)
+        let pixelScale: CGFloat
+        if #available(macOS 14.0, *) {
+            pixelScale = CGFloat(filter.pointPixelScale)
+        } else {
+            pixelScale = CGFloat(mainScreen.backingScaleFactor)
+        }
         configuration.width = max(1, Int((CGFloat(display.width) * pixelScale).rounded()))
         configuration.height = max(1, Int((CGFloat(display.height) * pixelScale).rounded()))
         configuration.showsCursor = false
         configuration.colorSpaceName = CGColorSpace.sRGB
-        guard let image = try? await SCScreenshotManager.captureImage(contentFilter: filter,
-                                                                      configuration: configuration)
+        guard let image = await ScreenCaptureCompat.captureImage(filter: filter,
+                                                                  displayID: display.displayID,
+                                                                  windowID: nil,
+                                                                  configuration: configuration)
         else { return nil }
         let cocoaBounds = ScreenshotSupport.cocoaRect(fromWindowServer: plan.bounds,
                                                       mainScreenHeight: mainScreen.frame.height)
@@ -412,14 +424,19 @@ enum ScreenshotCaptureEngine {
             let configuration = SCStreamConfiguration()
             configuration.width = max(1, Int((frame.width * scale).rounded()))
             configuration.height = max(1, Int((frame.height * scale).rounded()))
-            configuration.captureResolution = .best
+            if #available(macOS 14.0, *) {
+                configuration.captureResolution = .best
+            }
             configuration.showsCursor = false
             configuration.colorSpaceName = CGColorSpace.sRGB
             // A desktop-independent window may extend beyond its source display.
             // Requested dimensions alone do not restore pixels clipped there.
-            configuration.ignoreGlobalClipSingleWindow = true
-            return try? await SCScreenshotManager.captureImage(
-                contentFilter: SCContentFilter(desktopIndependentWindow: window), configuration: configuration)
+            if #available(macOS 14.0, *) {
+                configuration.ignoreGlobalClipSingleWindow = true
+            }
+            return await ScreenCaptureCompat.captureImage(
+                filter: SCContentFilter(desktopIndependentWindow: window), displayID: nil,
+                windowID: window.windowID, configuration: configuration)
         }
 
         // The clicked window sets the scale every other layer must match.

@@ -127,15 +127,48 @@ App updates, Cleaner, messaging downloads, Uninstaller, Homebrew manager (needs 
 
 ---
 
+## Full MacBook lineup on Ventura (floor macOS 13.0)
+
+Every group below runs Ventura and the matching universal slice. Macs that cannot run Ventura
+(pre-2017 MacBook/Pro, pre-2018 Air) are out of scope — the OS floor excludes them, not the app.
+
+| Group | Slice | Notch | XDR / 120Hz | Fans | Island | XDR boost | Fan Ctrl | dGPU tile | Camera |
+|---|---|---|---|---|---|---|---|---|---|
+| Air M1 (2020) | arm64 | none | neither | 0 (fanless) | ⚠️ simulated | ❌ | ❌ N/A | N/A | ✅ 720p |
+| Air M2/M3 (2022+) | arm64 | ✅ | neither | 0 (fanless) | ✅ native | ❌ | ❌ N/A | N/A | ✅ 1080p |
+| Pro 13" M1/M2 (2020–22) | arm64 | none | neither | 1 | ⚠️ simulated | ❌ | ✅ | N/A | ✅ 720p |
+| Pro 14"/16" (2021+) | arm64 | ✅ | ✅ both | 1–2 | ✅ native | ✅ | ✅ | N/A (integrated) | ✅ 1080p/12MP |
+| Pro 13" 2020 Intel (this host) | x86_64 | none | neither | 1 | ⚠️ simulated | ❌ | ✅ | N/A | ✅ 720p |
+| Pro 16" 2019 Intel | x86_64 | none | neither | 2 | ⚠️ simulated | ❌ | ✅ | ✅ (dGPU configs) | ✅ 720p |
+| Pro 13"/15" 2017–19, Air 2018–20 Intel | x86_64 | none | neither | 1–2 | ⚠️ simulated | ❌ | ✅ | N/A (integrated) | ✅ 480–720p |
+
+Notes:
+- **Island (notch vs no notch).** Native wrap-around needs a physical cutout (Air M2+ and 14"/16" Pro).
+  Everywhere else the island runs **simulated** — a drawn capsule in the menu bar, fully functional,
+  cosmetic-only difference. State it as such; never as "won't work."
+- **XDR boost.** Needs a built-in XDR panel (14"/16" Pro 2021+, Pro Display XDR). The switch is inert
+  elsewhere — the only feature that is genuinely **unavailable** off that hardware.
+- **Fan Control.** Fanless Airs have no fan to drive (N/A); all fanned models work via SMC keys.
+- **Liquid Glass** is a macOS 26 renderer: on Ventura *every* group gets the flat fallback. Not a
+  hardware gap.
+- **Touch Bar** (13" Intel/Pro M1-M2 groups) is unused by the app — no `NSTouchBar` references in
+  source — so its presence or absence changes nothing.
+- **ProMotion 120 Hz** (14"/16" Pro) needs no special case: `CompatDisplayLink` caps its preferred
+  rate at 60 fps and the `CADisplayLink` path follows the panel on 14+.
+- **Desktops** (Mini/Studio/iMac) follow the same rules: no notch → simulated island; no XDR panel →
+  no boost (except Pro Display XDR); Studio/Max dGPU tiles read N/A on integrated-only configs.
+
+---
+
 ## Verification status & caveats
 
 - **Statically confirmed** (from source): Extra brightness XDR requirement, Liquid Glass macOS 26 gate,
   Notch simulated-mode fallback, no Touch Bar usage, SMC-based Fan Control.
-- **Not yet runtime-verified:** the app has not been built/run on this host (upstream pins the macOS 26
-  SDK + Swift 5.9; this machine has SDK 13.3 + Swift 5.8.1). The GPU-tile **N/A** and the general
-  Intel runtime behavior should be confirmed once the port is built on a 26-SDK host and exercised on
-  actual macOS 13 Intel hardware (the port's Phase 6).
-- **Bottom line:** of the ~12 feature groups, only **Extra brightness (XDR)** is hard-disabled, while
-  **Dynamic Island/Notch** and **Liquid Glass** are simulated/degraded (no notch hardware; OS < 26), and
-  the **discrete-GPU monitor tile** is N/A (integrated graphics only). Everything else is compatible
-  with this 2020 Intel MacBook Pro.
+- **Compile-verified:** floor-13 CI build green
+  ([Port macOS 13 build #38264344727](https://github.com/Kev-sketch/breeze/actions/runs/38264344727)).
+- **Not yet runtime-verified:** the app has not been run on Ventura hardware. The GPU-tile **N/A**,
+  simulated-island layout, and general Intel-slice behavior should be confirmed by exercising the
+  built `.app` on actual macOS 13 Intel and Apple Silicon hardware.
+- **Bottom line:** everything runs on every Ventura-capable MacBook. Per-machine gaps: **XDR boost**
+  only on XDR panels, **native island** only with a notch (simulated elsewhere), **Fan Control** only
+  with fans, **dGPU tile** only with a discrete GPU, **Liquid Glass** nowhere below macOS 26.

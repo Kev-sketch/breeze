@@ -26,6 +26,10 @@ enum ActivationHandoff {
     static func yield(to app: NSRunningApplication) {
         lastSelfActivation = CFAbsoluteTimeGetCurrent()
         NSApp.activate(ignoringOtherApps: true)
-        NSApp.yieldActivation(to: app)
+        if #available(macOS 14.0, *) {
+            NSApp.yieldActivation(to: app)
+        } else {
+            app.activateCompat(from: .current)
+        }
     }
 }

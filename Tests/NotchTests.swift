@@ -2540,13 +2540,17 @@ enum NotchTests {
                    && prompt != info?["NSCalendarsFullAccessUsageDescription"] as? String,
                    "\(language) ships its own readable calendar permission explanation")
         }
-        suite.expect(NotchCalendarSupport.requestFailed(status: .notDetermined, hasError: false)
-               && NotchCalendarSupport.requestFailed(status: .writeOnly, hasError: false),
-               "a calendar request that silently fails to resolve read access surfaces an error")
-        suite.expect(!NotchCalendarSupport.requestFailed(status: .fullAccess, hasError: false)
-               && !NotchCalendarSupport.requestFailed(status: .denied, hasError: false)
-               && !NotchCalendarSupport.requestFailed(status: .restricted, hasError: false),
-               "successful grants and explicit system refusals keep their own calendar presentation")
+        // `.writeOnly` / `.fullAccess` need macOS 14 (floor is 13); the runner
+        // is newer, so these still execute on CI and guard the 14 branches.
+        if #available(macOS 14.0, *) {
+            suite.expect(NotchCalendarSupport.requestFailed(status: .notDetermined, hasError: false)
+                   && NotchCalendarSupport.requestFailed(status: .writeOnly, hasError: false),
+                   "a calendar request that silently fails to resolve read access surfaces an error")
+            suite.expect(!NotchCalendarSupport.requestFailed(status: .fullAccess, hasError: false)
+                   && !NotchCalendarSupport.requestFailed(status: .denied, hasError: false)
+                   && !NotchCalendarSupport.requestFailed(status: .restricted, hasError: false),
+                   "successful grants and explicit system refusals keep their own calendar presentation")
+        }
         suite.expect(NotchCalendarSupport.requestFailed(status: .notDetermined, hasError: true),
                "calendar authorization errors remain visible and retryable")
         suite.expect(NotchSupport.keepsPermissionSurface(requesting: true, resolvedAt: nil, now: 0),
