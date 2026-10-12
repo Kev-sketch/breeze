@@ -155,8 +155,7 @@ extension NSRunningApplication {
         if #available(macOS 14.0, *) {
             return activate(from: source, options: options)
         }
-        activate(ignoringOtherApps: true)
-        return true
+        return activate(options: options.union(.activateIgnoringOtherApps))
     }
 }
 

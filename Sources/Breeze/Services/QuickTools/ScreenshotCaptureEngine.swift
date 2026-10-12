@@ -352,7 +352,7 @@ enum ScreenshotCaptureEngine {
         if #available(macOS 14.0, *) {
             pixelScale = CGFloat(filter.pointPixelScale)
         } else {
-            pixelScale = CGFloat(mainScreen?.backingScaleFactor ?? 2)
+            pixelScale = CGFloat(mainScreen.backingScaleFactor)
         }
         configuration.width = max(1, Int((CGFloat(display.width) * pixelScale).rounded()))
         configuration.height = max(1, Int((CGFloat(display.height) * pixelScale).rounded()))
