@@ -1,0 +1,75 @@
+name: Breeze Release
+
+# Builds the universal (Intel + Apple Silicon) Breeze app on the macOS 26 runner
+# and attaches the packaged DMG to a GitHub release — the repository's Downloads
+# section. The local build cannot run on older toolchains (the app needs the
+# macOS 26 SDK), so this is the supported way to produce a Breeze DMG.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to create/update (e.g. v3.4.1-breeze)"
+        required: true
+        default: "v3.4.1-breeze"
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: breeze-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build, package and publish DMG
+    runs-on: macos-26
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Build
+        run: ./build.sh
+
+      - name: Selftest
+        run: ./build/Breeze --selftest
+
+      - name: Package DMG
+        run: ./Tools/make-dmg.sh
+
+      - name: Resolve tag
+        id: tag
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "value=${{ github.event.inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish release with the DMG
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="${{ steps.tag.outputs.value }}"
+          DMG="$(ls dist/Breeze-*.dmg | head -n 1)"
+          {
+            echo "Unofficial **Breeze** fork build of the Vorssaint macOS menu bar toolkit."
+            echo
+            echo "- Universal binary: Apple Silicon + Intel"
+            echo "- Minimum macOS: 13 (Ventura)"
+            echo "- Ad-hoc signed (no Apple Developer ID). On first launch, right-click the app and choose Open, or run:"
+            echo '  `xattr -dr com.apple.quarantine /Applications/Breeze.app`'
+            echo
+            echo "Source: https://github.com/${GITHUB_REPOSITORY}"
+          } > /tmp/notes.md
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release upload "$TAG" "$DMG" --repo "$GITHUB_REPOSITORY" --clobber
+          else
+            gh release create "$TAG" "$DMG" --repo "$GITHUB_REPOSITORY" \
+              --title "Breeze ${TAG#v}" --notes-file /tmp/notes.md
+          fi
+          echo "Published: https://github.com/${GITHUB_REPOSITORY}/releases/tag/${TAG}"
