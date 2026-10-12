@@ -6,7 +6,11 @@ import PackageDescription
 
 let package = Package(
     name: "Vorssaint",
-    platforms: [.macOS(.v14)],
+    // Lowered from .v14 to .v13 by the legacy-OS port: SMAppService (used
+    // unguarded for login-item / fan-control daemon registration) is the
+    // youngest API the app depends on, and it requires macOS 13.0. See
+    // PORTING-macos-legacy.md for the full version-floor analysis.
+    platforms: [.macOS(.v13)],
     targets: [
         .systemLibrary(
             name: "HIDEventSystem",

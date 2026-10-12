@@ -62,7 +62,15 @@ FAN_HELPER_ID="$APP_BUNDLE_ID.fan-control"
 # Sources/NowPlayingAdapter. Staged under Contents/Frameworks, signed on its own.
 NOW_PLAYING_ADAPTER_ID="$APP_BUNDLE_ID.now-playing"
 NOW_PLAYING_ADAPTER="libVorssaintNowPlaying.dylib"
-TARGET="arm64-apple-macosx14.0"
+# --- Universal binary support: Apple Silicon (arm64) + Intel (x86_64) ---
+# Upstream built arm64 only. This port produces a universal (fat) binary so the
+# app runs natively on both Apple Silicon and Intel Macs. Deployment floor dropped
+# from 14.0 to 13.0 (see PORTING-macos-legacy.md); SMAppService is the youngest
+# unguarded API and requires macOS 13.0.
+MACOS_DEPLOYMENT_TARGET=13.0
+ARCHS=(arm64 x86_64)
+NATIVE_TARGET="$(uname -m)-apple-macosx${MACOS_DEPLOYMENT_TARGET}"
+TARGET="arm64-apple-macosx${MACOS_DEPLOYMENT_TARGET}"
 ENTITLEMENTS="Resources/Vorssaint.entitlements"
 LEGACY_IDENTITY="Vorssaint Utils Signing"
 
@@ -211,6 +219,22 @@ if [[ "$SDK" == "$PINNED_SDK" ]]; then
     # Swift 6.4 can read the SDK 26 interfaces when given their compiler version.
     SDK_COMPAT_FLAGS=(-Xfrontend -interface-compiler-version -Xfrontend 6.3.2)
 fi
+
+# Build one product as a universal binary by compiling each architecture
+# separately and merging the slices with lipo. Pass the swiftc flags EXCEPT
+# -target / -sdk / -o (this function supplies those).
+build_universal() {
+    local out="$1"; shift
+    local arch arch_out per_arch=()
+    for arch in "${ARCHS[@]}"; do
+        arch_out="build/arch/${arch}/$(basename "$out")"
+        mkdir -p "$(dirname "$arch_out")"
+        swiftc -target "${arch}-apple-macosx${MACOS_DEPLOYMENT_TARGET}" -sdk "$SDK" \
+            "${SDK_COMPAT_FLAGS[@]}" "$@" -o "$arch_out" || return $?
+        per_arch+=("$arch_out")
+    done
+    lipo -create -output "$out" "${per_arch[@]}"
+}
 
 # The defaults migrations under test need a real UserDefaults suite, and every
 # suite leaves an empty plist in ~/Library/Preferences. The tests already clear
@@ -555,7 +579,7 @@ if (( TEST )); then
     echo "▸ Building & running tests against $(basename "$SDK")…"
     swiftc -Onone -incremental -enable-batch-mode -j "$(sysctl -n hw.logicalcpu)" \
         -module-name VorssaintTests -output-file-map "$TEST_OUTPUT_FILE_MAP" \
-        -target "$TARGET" -sdk "$SDK" "${SDK_COMPAT_FLAGS[@]}" \
+        -target "$NATIVE_TARGET" -sdk "$SDK" "${SDK_COMPAT_FLAGS[@]}" \
         "${VM_STATISTICS_COMPAT_FLAGS[@]}" "${TEST_SOURCES[@]}" -o build/metrics-tests
     test_status=0
     ./build/metrics-tests "${TEST_ARGS[@]}" || test_status=$?
@@ -577,40 +601,40 @@ if (( ! DEV )); then
     # changed since, and a fresh checkout has none.
     find build -mindepth 1 -maxdepth 1 ! -name objects -exec rm -rf {} + 2>/dev/null || true
 fi
-APP_OBJECT_DIR="build/objects/$EXECUTABLE"
-mkdir -p build "$APP_OBJECT_DIR"
-APP_OUTPUT_FILE_MAP="$APP_OBJECT_DIR/output-file-map.json"
-write_swift_output_file_map "$APP_OUTPUT_FILE_MAP" "$APP_OBJECT_DIR" "${APP_SOURCES[@]}"
+mkdir -p build
 # Without -j the driver compiles one file at a time, and without batch mode
 # each file's compiler parses the whole module again: a clean release took a
 # quarter of an hour. Batches share that work and run on every core, and the
 # optimization stays per file, as before.
-swiftc "${APP_OPTIMIZATION_FLAGS[@]}" -incremental -enable-batch-mode -j "$(sysctl -n hw.logicalcpu)" \
-    -output-file-map "$APP_OUTPUT_FILE_MAP" \
-    -target "$TARGET" -sdk "$SDK" "${SDK_COMPAT_FLAGS[@]}" "${VM_STATISTICS_COMPAT_FLAGS[@]}" "${HID_EVENT_SYSTEM_FLAGS[@]}" \
+# Built as a universal binary (arm64 + x86_64) so it runs on both Apple Silicon
+# and Intel Macs. Each architecture compiles into its own object directory under
+# build/arch/<arch>/; the app's per-file incremental output-file-map is not used
+# on the universal path (each arch is a fresh, complete compile).
+build_universal "build/$EXECUTABLE" \
+    "${APP_OPTIMIZATION_FLAGS[@]}" -enable-batch-mode -j "$(sysctl -n hw.logicalcpu)" \
+    "${VM_STATISTICS_COMPAT_FLAGS[@]}" "${HID_EVENT_SYSTEM_FLAGS[@]}" \
     "${BUILD_VARIANT_FLAGS[@]}" \
-    "${APP_SOURCES[@]}" -o "build/$EXECUTABLE"
+    "${APP_SOURCES[@]}"
 
 echo "▸ Compiling protected fan helper…"
-swiftc -O -target "$TARGET" -sdk "$SDK" "${SDK_COMPAT_FLAGS[@]}" "${BUILD_VARIANT_FLAGS[@]}" \
+build_universal "build/$FAN_HELPER_ID" \
+    -O "${BUILD_VARIANT_FLAGS[@]}" \
     Sources/Vorssaint/Services/FanControl/FanControlSupport.swift \
     Sources/Vorssaint/Services/FanControl/FanControlXPC.swift \
     Sources/Vorssaint/Services/SystemMonitor/SMCClient.swift \
     Sources/Vorssaint/Services/Metrics/TemperatureSensorSelector.swift \
     Sources/Vorssaint/Services/FanControl/FanControlHardware.swift \
-    Sources/FanControlHelper/main.swift \
-    -o "build/$FAN_HELPER_ID"
+    Sources/FanControlHelper/main.swift
 "build/$FAN_HELPER_ID" --selftest
 
 echo "▸ Compiling Now Playing adapter…"
-swiftc -O -target "$TARGET" -sdk "$SDK" "${SDK_COMPAT_FLAGS[@]}" -emit-library \
-    -module-name VorssaintNowPlaying \
+build_universal "build/$NOW_PLAYING_ADAPTER" \
+    -O -emit-library -module-name VorssaintNowPlaying \
     Sources/NowPlayingAdapter/NowPlayingAdapter.swift \
     Sources/NowPlayingAdapter/NowPlayingQueue.swift \
     Sources/NowPlayingAdapter/NowPlayingSelection.swift \
     Sources/Vorssaint/Services/Notch/NotchPlaybackSource.swift \
-    Sources/Vorssaint/Services/Notch/NotchPlaybackCommand.swift \
-    -o "build/$NOW_PLAYING_ADAPTER"
+    Sources/Vorssaint/Services/Notch/NotchPlaybackCommand.swift
 
 echo "▸ Generating app icon…"
 swift Tools/MakeIcon.swift build/AppIcon.iconset

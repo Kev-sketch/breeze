@@ -26,7 +26,7 @@
   <a href="https://github.com/vorssaint/vorssaint-utils/releases"><img src="https://img.shields.io/github/v/release/vorssaint/vorssaint-utils?label=release&color=4c8dff" alt="Latest release"></a>
   <a href="https://github.com/vorssaint/vorssaint-utils/releases"><img src="https://img.shields.io/github/downloads/vorssaint/vorssaint-utils/total?color=4c8dff" alt="Downloads"></a>
   <a href="https://github.com/vorssaint/vorssaint-utils/actions/workflows/ci.yml"><img src="https://github.com/vorssaint/vorssaint-utils/actions/workflows/ci.yml/badge.svg?branch=main&event=push" alt="CI status"></a>
-  <a href="#what-you-need"><img src="https://img.shields.io/badge/macOS-14%2B%20Apple%20Silicon-black" alt="macOS 14 and newer, Apple Silicon"></a>
+  <a href="#what-you-need"><img src="https://img.shields.io/badge/macOS-13%2B%20Universal-black" alt="macOS 13 and newer, Intel and Apple Silicon"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--or--later-blue" alt="License GPL 3.0 or later"></a>
 </p>
 
@@ -208,8 +208,13 @@ See the [permissions guide](docs/PERMISSIONS.md) for which features need access 
 
 ## What you need
 
-- A Mac with Apple Silicon
-- macOS 14 Sonoma or newer
+- Any Mac — Apple Silicon **or** Intel
+- macOS 13 Ventura or newer
+
+> **Legacy-OS port note.** This branch (`port/macos-universal`) is a port that builds a **universal
+> binary (Intel + Apple Silicon)** and lowers the minimum to **macOS 13**. It does **not** reach
+> macOS 10.0–10.14 — a SwiftUI app cannot run there (SwiftUI needs 10.15; Swift needs 10.10; 10.0–10.3
+> are PowerPC-only). See [`PORTING-macos-legacy.md`](PORTING-macos-legacy.md) for the full analysis.
 
 ### Build it yourself
 
