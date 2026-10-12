@@ -144,6 +144,39 @@ extension View {
     }
 }
 
+// MARK: - misc SwiftUI 14 values
+
+extension View {
+    /// `.background(.background.secondary, in:)` needs macOS 14.
+    @ViewBuilder
+    func backgroundSecondaryCompat<S: Shape>(in shape: S) -> some View {
+        if #available(macOS 14.0, *) {
+            background(.background.secondary, in: shape)
+        } else {
+            background(Color(nsColor: .controlBackgroundColor), in: shape)
+        }
+    }
+
+    /// `.buttonBorderShape(.capsule)` needs macOS 14.
+    @ViewBuilder
+    func buttonBorderShapeCapsuleCompat() -> some View {
+        if #available(macOS 14.0, *) { buttonBorderShape(.capsule) } else { self }
+    }
+
+    /// `.transition(.blurReplace)` needs macOS 14.
+    @ViewBuilder
+    func transitionBlurReplaceCompat() -> some View {
+        if #available(macOS 14.0, *) { transition(.blurReplace) } else { transition(.opacity) }
+    }
+
+    /// `.transaction(value:_:)` needs macOS 14.
+    @ViewBuilder
+    func transactionCompat<V: Equatable>(value: V,
+                                         _ transform: @escaping (inout Transaction) -> Void) -> some View {
+        if #available(macOS 14.0, *) { transaction(value: value, transform) } else { transaction(transform) }
+    }
+}
+
 // MARK: - NSRunningApplication.activateCompat(from:options:)  (macOS 14)
 
 extension NSRunningApplication {
