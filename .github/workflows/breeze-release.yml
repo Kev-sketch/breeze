@@ -60,7 +60,7 @@ jobs:
             echo "Unofficial **Breeze** fork build of the Vorssaint macOS menu bar toolkit."
             echo
             echo "- Universal binary: Apple Silicon + Intel"
-            echo "- Minimum macOS: 13 (Ventura)"
+            echo "- Minimum macOS: 14 (Sonoma)"
             echo "- Ad-hoc signed (no Apple Developer ID). On first launch, right-click the app and choose Open, or run:"
             echo '  `xattr -dr com.apple.quarantine /Applications/Breeze.app`'
             echo

@@ -64,10 +64,12 @@ NOW_PLAYING_ADAPTER_ID="$APP_BUNDLE_ID.now-playing"
 NOW_PLAYING_ADAPTER="libBreezeNowPlaying.dylib"
 # --- Universal binary support: Apple Silicon (arm64) + Intel (x86_64) ---
 # Upstream built arm64 only. This port produces a universal (fat) binary so the
-# app runs natively on both Apple Silicon and Intel Macs. Deployment floor dropped
-# from 14.0 to 13.0 (see PORTING-macos-legacy.md); SMAppService is the youngest
-# unguarded API and requires macOS 13.0.
-MACOS_DEPLOYMENT_TARGET=13.0
+# app runs natively on both Apple Silicon and Intel Macs. The deployment floor is
+# macOS 14.0: the codebase uses 607 macOS-14 APIs unguarded (onChange(of:initial:_:),
+# symbolEffect, contentTransition(.replace), SCScreenshotManager, CADisplayLink,
+# keyframeAnimator, …) across 85 files, so 14.0 is a hard requirement.
+# See PORTING-macos-legacy.md.
+MACOS_DEPLOYMENT_TARGET=14.0
 ARCHS=(arm64 x86_64)
 NATIVE_TARGET="$(uname -m)-apple-macosx${MACOS_DEPLOYMENT_TARGET}"
 TARGET="arm64-apple-macosx${MACOS_DEPLOYMENT_TARGET}"
