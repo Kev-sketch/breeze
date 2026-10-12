@@ -43,7 +43,7 @@ for arg in "$@"; do
 done
 
 if (( DEV )); then
-    APP_NAME="Breeze (Developer)"
+    APP_NAME="Breeze (most recent version)"
     EXECUTABLE="BreezeDeveloper"
     APP_BUNDLE_ID="com.kevsketch.breeze.utils.dev"
     BUILD_VARIANT_FLAGS=(-D BREEZE_DEVELOPMENT)
@@ -260,7 +260,7 @@ discard_test_preferences() {
     # two quiet checks, but keep a hard limit so persistent failures still fail CI.
     for attempt in {1..10}; do
         for name in "breeze.tests." "com.kevsketch.breeze.tests."; do
-            rm -f "$preferences"/$name*.plist(N)
+            rm -f "$preferences/$name*.plist"
         done
         rm -f "$preferences/metrics-tests.plist"
         sleep 0.2
@@ -715,7 +715,7 @@ cp Resources/com.kevsketch.breeze.utils.fan-control.plist \
     "$STAGE/Contents/Library/LaunchDaemons/$FAN_HELPER_ID.plist"
 cp Resources/Info.plist "$STAGE/Contents/Info.plist"
 cp CHANGELOG.md "$STAGE/Contents/Resources/CHANGELOG.md"
-for lproj in Resources/*.lproj(N); do
+for lproj in Resources/*.lproj; do
     cp -R "$lproj" "$STAGE/Contents/Resources/"
 done
 if (( DEV )); then
