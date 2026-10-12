@@ -281,6 +281,9 @@ if (( TEST )); then
     TEST_OBJECT_DIR="build/objects/tests"
     mkdir -p "$TEST_OBJECT_DIR"
     TEST_SOURCES=(
+        Sources/Breeze/Support/BackDeployCompat.swift
+        Sources/Breeze/Support/CompatDisplayLink.swift
+        Sources/Breeze/Support/ScreenCaptureCompat.swift
         Sources/Breeze/Services/Media/MediaSupport.swift
         Sources/Breeze/Core/QuitProtectionSupport.swift
         Sources/Breeze/Core/QuitProtectionStrings.swift

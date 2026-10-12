@@ -127,7 +127,7 @@ enum NotchEqualizerTests {
         // A link left behind would wake the app thirty times a second after
         // its clock stopped or went away.
         let keptClock = NotchDecorativeClock { _ in }
-        weak var stoppedLink: CADisplayLink?
+        weak var stoppedLink: CompatDisplayLink?
         var range: CAFrameRateRange?
         autoreleasepool {
             keptClock.start(in: container)
@@ -139,7 +139,7 @@ enum NotchEqualizerTests {
                "the motion clock asks for at most thirty steps a second")
         autoreleasepool { keptClock.stop() }
         expect(stoppedLink == nil, "stopping a motion clock takes its display link off the run loop")
-        weak var discardedLink: CADisplayLink?
+        weak var discardedLink: CompatDisplayLink?
         autoreleasepool {
             let clock = NotchDecorativeClock { _ in }
             clock.start(in: container)

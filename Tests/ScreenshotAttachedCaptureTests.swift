@@ -103,13 +103,23 @@ enum ScreenshotAttachedCaptureTests {
         expectPixels(recaptured, scale: 2, suite)
         suite.expect(SCScreenshotManager.requests.map(\.id) == [1, 2, 3] && SCShareableContent.calls == 1,
                      "clipped, differently scaled and missing buffers share one content snapshot and are recaptured")
+        // `ignoreGlobalClipSingleWindow` / `captureResolution` need macOS 14
+        // (floor is 13); the runner is newer, so these still execute on CI.
         suite.expect(SCScreenshotManager.requests.allSatisfy { request in
             let configuration = request.configuration
             let frame = frames[request.id]!
+            let clipsBeyondDisplay: Bool
+            let bestResolution: Bool
+            if #available(macOS 14.0, *) {
+                clipsBeyondDisplay = configuration.ignoreGlobalClipSingleWindow
+                bestResolution = configuration.captureResolution == .best
+            } else {
+                clipsBeyondDisplay = false
+                bestResolution = false
+            }
             return configuration.width == Int(frame.width * 2)
                 && configuration.height == Int(frame.height * 2)
-                && configuration.ignoreGlobalClipSingleWindow
-                && configuration.captureResolution == .best && !configuration.showsCursor
+                && clipsBeyondDisplay && bestResolution && !configuration.showsCursor
         }, "each independent layer requests its full frame beyond display clipping at the reported scale")
 
         reset(scale: 2)

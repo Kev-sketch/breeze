@@ -123,6 +123,10 @@ enum MenuPanelRecoveryTests {
             return true
         }
         @discardableResult
+        func activateCompat(from source: NSRunningApplication, options: [Int] = []) -> Bool {
+            activate(from: source, options: options)
+        }
+        @discardableResult
         func activate(options: [Int]) -> Bool { activate(from: .current, options: options) }
     }
     final class NSWorkspace {

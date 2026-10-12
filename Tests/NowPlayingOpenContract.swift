@@ -35,6 +35,10 @@ enum NowPlayingOpenContract {
             events.append("fallback:\(processIdentifier):\(options.contains(.activateAllWindows))")
             return true
         }
+        @discardableResult func activateCompat(from source: App,
+                                               options: NSApplication.ActivationOptions = []) -> Bool {
+            activate(from: source, options: options)
+        }
     }
     enum Handoff {
         static func yield(to app: App) { events.append("yield:\(app.processIdentifier)") }
