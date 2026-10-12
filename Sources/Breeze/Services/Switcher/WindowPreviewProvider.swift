@@ -180,8 +180,9 @@ final class WindowPreviewProvider {
                 configuration.showsCursor = false
 
                 let filter = SCContentFilter(desktopIndependentWindow: scWindow)
-                guard let image = try? await SCScreenshotManager.captureImage(contentFilter: filter,
-                                                                              configuration: configuration)
+                guard let image = await ScreenCaptureCompat.captureImage(filter: filter, displayID: nil,
+                                                                         windowID: scWindow.windowID,
+                                                                         configuration: configuration)
                 else { continue }
                 guard !Task.isCancelled else { return }
 
