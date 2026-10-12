@@ -157,23 +157,16 @@ Reorder or hide panel sections, choose a compact layout, and export settings to 
 
 ## Install
 
-With [Homebrew](https://brew.sh):
+Download the disk image from the [releases page](https://github.com/Kev-sketch/breeze/releases),
+open it, and drag **Breeze** into Applications.
 
-```sh
-brew install --cask breeze
-```
-
-Or grab the disk image from the [releases page](https://github.com/Kev-sketch/breeze/releases) and drag Breeze into Applications.
-
-Builds are signed with an Apple Developer ID and notarized, so macOS opens them without a fuss and your permissions survive updates.
+> **Unofficial fork build.** It is **ad-hoc signed**, not notarized, so macOS shows a Gatekeeper
+> warning on first launch — right-click the app and choose **Open** (or run
+> `xattr -dr com.apple.quarantine /Applications/Breeze.app`). Requires **macOS 14 or newer**.
 
 ## Uninstall
 
-With Homebrew:
-
-```sh
-brew uninstall --cask breeze
-```
+Quit Breeze, then drag **Breeze** from Applications to the Trash.
 
 To remove Breeze completely, including its settings and permissions:
 
