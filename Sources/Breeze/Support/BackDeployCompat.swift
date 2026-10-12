@@ -110,8 +110,6 @@ extension View {
 // MARK: - onGeometryChange(for:of:action:)  (macOS 14)
 
 extension View {
-    /// Back-deploys `onGeometryChange(for:of:action:)` (macOS 14+) to macOS 13.
-    ///
     /// On 13 the view's own size is read through a layout-neutral background
     /// `GeometryReader`; the action fires on appear and whenever the measured
     /// value changes, matching the 14 semantics. `V` stays `Equatable` so

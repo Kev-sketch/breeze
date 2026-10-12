@@ -1,4 +1,4 @@
-# PORTING-macos-legacy.md — Breeze on macOS (universal: Intel + Apple Silicon, floor macOS 14)
+# PORTING-macos-legacy.md — Breeze on macOS (universal: Intel + Apple Silicon, floor macOS 13)
 
 > Legacy-OS port produced with the `legacy-os-port` skill. This file is the port's memory: it lets a
 > future session pick up the work without re-discovering anything.
@@ -22,7 +22,8 @@
 
 - **Upstream:** https://github.com/vorssaint/vorssaint-utils
 - **Port target:** a **universal binary (arm64 + x86_64)** so the app runs natively on **both Apple
-  Silicon and Intel Macs**. Deployment floor: **macOS 14.0 (Sonoma)**, unchanged from upstream.
+  Silicon and Intel Macs**. Deployment floor: **macOS 13.0 (Ventura)** via explicit fallbacks
+  (see the ADDENDUM above and §5.1).
 - **Status:** the port builds a universal binary; the full app build is verified by CI on the
   `macos-26` GitHub runner (see `.github/workflows/breeze-release.yml`).
 - **What is verified, and how:**
@@ -57,8 +58,8 @@ build therefore requires a machine with the **macOS 26 SDK + Xcode 26 / Swift 5.
 | Area | Upstream | This port |
 |---|---|---|
 | Architecture | `arm64` only (`TARGET="arm64-apple-macosx14.0"`) | **universal `arm64` + `x86_64`** via a `build_universal` helper that compiles each arch and merges with `lipo -create` |
-| Deployment target | macOS 14.0 | macOS 14.0 (unchanged — see the correction above) |
-| Test target | `arm64` (would not run on Intel) | native host arch (`NATIVE_TARGET="$(uname -m)-apple-macosx14.0"`) so tests run on either architecture |
+| Deployment target | macOS 14.0 | **macOS 13.0** (Ventura fallbacks in `Sources/Breeze/Support/`; see §5.1) |
+| Test target | `arm64` (would not run on Intel) | native host arch (`NATIVE_TARGET="$(uname -m)-apple-macosx${MACOS_DEPLOYMENT_TARGET}"`) so tests run on either architecture |
 | Toolchain / language level | `swift-tools-version:5.9` | unchanged (the 26-SDK host supplies Swift ≥ 5.9) |
 | Dependencies | none external (SPM); two C system-library shims (`HIDEventSystem`, `VMStatisticsCompat`) | unchanged |
 
@@ -145,10 +146,11 @@ Runtime verification requires:
 - `zsh -n build.sh` → syntax OK.
 - Universal mechanism: standalone `swiftc` (arm64 + x86_64) + `lipo -create` → fat `x86_64 arm64`
   Mach-O that runs on this Intel host. (Artefact: `/tmp/univtest/vt_universal`.)
-- `Package.swift` floor → `.macOS(.v14)` (the correct hard floor; see the correction above).
-- **Pending on a 26-SDK host:** full `./build.sh` compile/typecheck; running the universal `.app` on
-  macOS 13 Intel and macOS 13/14 Apple Silicon; exercising menu-bar features, the fan-control daemon
-  (`SMAppService` registration on 13+), and the Now Playing adapter.
+- `Package.swift` floor → `.macOS(.v13)`; floor-13 CI build green
+  ([Port macOS 13 build #38264344727](https://github.com/Kev-sketch/breeze/actions/runs/38264344727)).
+- **Pending:** running the universal `.app` on macOS 13 Intel and macOS 13/14 Apple Silicon;
+  exercising menu-bar features, the fan-control daemon (`SMAppService` registration on 13+),
+  and the Now Playing adapter.
 
 ## 7. How to build
 
@@ -175,5 +177,5 @@ Runtime verification requires:
 - **Adaptive icon catalog** needs Xcode 26's `actool` and is skipped on CLT builds (falls back to
   `AppIcon.icns`) — cosmetic only.
 - **macOS 10.0–10.14 are unreachable** for this SwiftUI codebase (see §4.4). The port envelope is
-  macOS 14 → current, universal (Intel + Apple Silicon).
+  macOS 13 → current, universal (Intel + Apple Silicon).
 - Full end-to-end runtime verification is pending a 26-SDK host and macOS 13 hardware (see §5).
