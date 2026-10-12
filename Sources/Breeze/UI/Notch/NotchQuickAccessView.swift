@@ -44,9 +44,11 @@ final class NotchQuickAccessMotion: ObservableObject {
         let animation: Animation? = animated
             ? (visible ? .spring(duration: 0.38, bounce: 0.12).delay(delay) : .easeIn(duration: NotchQuickAccessLayout.withdrawalDuration))
             : nil
-        withAnimation(animation, completionCriteria: .logicallyComplete) {
+        withAnimation(animation) {
             progress = visible ? 1 : 0
-        } completion: { [weak self] in
+        }
+        // macOS 13 has no animation-completion callback; approximate it.
+        DispatchQueue.main.asyncAfter(deadline: .now() + (animated ? 0.4 : 0)) { [weak self] in
             guard let self, self.generation == token else { return }
             self.interactive = visible
         }

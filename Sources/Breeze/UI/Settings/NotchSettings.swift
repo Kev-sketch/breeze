@@ -448,7 +448,7 @@ struct NotchSettings: View {
         case .calendar:
             let calendar = FeatureStrings.notchCalendar(l10n.language)
             Text(calendar.permission).font(.callout).foregroundStyle(.secondary)
-            if permissions.calendarAccess == .fullAccess {
+            if permissions.calendarAccess.compatFullAccess {
                 Label(l10n.s.permissionGranted, systemImage: "checkmark.circle.fill").foregroundStyle(.green)
             } else {
                 Button(calendar.allow, action: permissions.requestCalendar).disabled(permissions.requestingCalendar)
@@ -459,7 +459,7 @@ struct NotchSettings: View {
                       isOn: $calendarCountdown)
             switchRow("hourglass", calendar.timeLeft, caption: calendar.timeLeftHint, isOn: $calendarTimeLeft)
             switchRow("number", calendar.weekNumbers, isOn: $calendarWeekNumbers)
-            if permissions.calendarAccess == .fullAccess { NotchCalendarSelection() }
+            if permissions.calendarAccess.compatFullAccess { NotchCalendarSelection() }
         case .timer:
             let activities = FeatureStrings.notchActivities(l10n.language)
             switchRow("eye.slash", activities.hideTimerCountdown,

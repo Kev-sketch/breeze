@@ -23,7 +23,7 @@ struct NotchCalendarView: View {
 
     var body: some View {
         Group {
-            if permissions.calendarAccess == .fullAccess {
+            if permissions.calendarAccess.compatFullAccess {
                 TimelineView(.everyMinute) { context in
                     Group {
                         if showsMonth {

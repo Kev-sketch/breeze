@@ -802,7 +802,7 @@ struct PermissionsPortalSections: View {
             case .unknown: return .unknown
             }
         case .calendar:
-            return permissions.calendarAccess == .fullAccess ? .granted : .missing
+            return permissions.calendarAccess.compatFullAccess ? .granted : .missing
         case .camera:
             switch permissions.camera {
             case .granted: return .granted
@@ -931,7 +931,7 @@ private struct PermissionPortalRow: View {
         case .accessibility, .screenRecording, .fullDiskAccess: return true
         case .notifications: return Permissions.shared.notifications == .undetermined
         case .calendar: return Permissions.shared.calendarAccess == .notDetermined
-            || Permissions.shared.calendarAccess == .writeOnly
+            || Permissions.shared.calendarAccess.compatWriteOnly
         case .camera: return Permissions.shared.camera == .undetermined
         case .microphone: return Permissions.shared.microphone == .undetermined
         case .filesAndFolders, .automationFinder, .automationTerminal, .automationPlayback, .audioCapture,

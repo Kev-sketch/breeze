@@ -10,6 +10,8 @@
 // behaviour on both OSes.
 
 import SwiftUI
+import AppKit
+import EventKit
 
 // MARK: - onChange(of:initial:_:)  (macOS 14)
 
@@ -138,6 +140,71 @@ extension View {
             focusEffectDisabled()
         } else {
             self
+        }
+    }
+}
+
+// MARK: - NSRunningApplication.activateCompat(from:options:)  (macOS 14)
+
+extension NSRunningApplication {
+    /// macOS 14 added cooperative `activate(from:options:)`; macOS 13 only has
+    /// the older `activate(ignoringOtherApps:)`.
+    @discardableResult
+    func activateCompat(from source: NSRunningApplication,
+                        options: NSApplication.ActivationOptions = []) -> Bool {
+        if #available(macOS 14.0, *) {
+            return activate(from: source, options: options)
+        }
+        activate(ignoringOtherApps: true)
+        return true
+    }
+}
+
+// MARK: - EventKit authorization  (macOS 14)
+
+extension EKAuthorizationStatus {
+    /// macOS 14 split `.authorized` into `.fullAccess` / `.writeOnly`.
+    var compatFullAccess: Bool {
+        if #available(macOS 14.0, *) { return self == .fullAccess }
+        return self == .authorized
+    }
+
+    var compatWriteOnly: Bool {
+        if #available(macOS 14.0, *) { return self == .writeOnly }
+        return false
+    }
+
+    /// Statuses that mean "the user has answered": granted, denied, restricted.
+    static var compatSettledValues: [EKAuthorizationStatus] {
+        if #available(macOS 14.0, *) { return [.fullAccess, .denied, .restricted] }
+        return [.authorized, .denied, .restricted]
+    }
+}
+
+// MARK: - ContentUnavailableView  (macOS 14)
+
+/// Stand-in for `ContentUnavailableView` on macOS 13.
+struct ContentUnavailableCompat: View {
+    let title: String
+    let systemImage: String
+    var message: String = ""
+
+    var body: some View {
+        if #available(macOS 14.0, *) {
+            ContentUnavailableView(title, systemImage: systemImage, description: Text(message))
+        } else {
+            VStack(spacing: 8) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 28, weight: .regular))
+                    .foregroundStyle(.secondary)
+                Text(title).font(.headline)
+                Text(message)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(24)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 }

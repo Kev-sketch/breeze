@@ -568,8 +568,8 @@ private struct ScreenshotSharedLinksView: View {
             Divider()
 
             if sharing.records.isEmpty {
-                ContentUnavailableView(strings.sharedLinksEmpty,
-                                       systemImage: "link.badge.plus")
+                ContentUnavailableCompat(title: strings.sharedLinksEmpty,
+                                         systemImage: "link.badge.plus")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List(sharing.records) { record in
