@@ -5,12 +5,23 @@ import SwiftUI
 
 /// Shared look & feel: brand colors, card styling and the brand mark.
 enum Theme {
-    /// Near-black background behind the brand mark. Neutral greys into black, no
-    /// colour cast, with just a hint of depth so the badge does not read as flat.
+    /// Deep Breeze-tinted backdrop behind the brand mark: near-black with a cool
+    /// navy-teal cast, so the surface reads as part of the app's palette.
     static let spaceGradient = LinearGradient(
-        colors: [Color(white: 0.10),
-                 Color(white: 0.04),
-                 Color.black],
+        colors: [Color(red: 0.06, green: 0.12, blue: 0.20),
+                 Color(red: 0.04, green: 0.10, blue: 0.15),
+                 Color(red: 0.02, green: 0.05, blue: 0.08)],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+
+    /// The Breeze brand accent: a light, airy sky-teal.
+    static let brandAccent = Color(red: 0.22, green: 0.74, blue: 0.97)
+
+    /// Brand gradient for the badge and other brand-forward surfaces.
+    static let brandGradient = LinearGradient(
+        colors: [Color(red: 0.36, green: 0.81, blue: 0.98),
+                 Color(red: 0.11, green: 0.53, blue: 0.86)],
         startPoint: .topLeading,
         endPoint: .bottomTrailing
     )
@@ -295,7 +306,7 @@ struct BrandBadge: View {
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: size * 0.26, style: .continuous)
-                .fill(Theme.spaceGradient)
+                .fill(Theme.brandGradient)
             BrandMark(width: size * 0.8)
         }
         .frame(width: size, height: size)

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Breeze">
+  <title>Breeze</title>
+  <g transform="translate(0,8)" fill="none" stroke="#000000" stroke-width="19" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M64 80 H170 a24 24 0 1 0 -24 -24"/>
+    <path d="M56 128 H198 a24 24 0 1 1 -24 24"/>
+    <path d="M80 184 H124"/>
+  </g>
+</svg>
