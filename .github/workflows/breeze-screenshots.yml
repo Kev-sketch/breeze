@@ -1,0 +1,58 @@
+name: Breeze Screenshots
+
+# Attempts to capture README screenshots of the built app on the macOS 26 runner.
+# The app cannot run on the local dev machine (it needs macOS 14), so this is the
+# only place a real capture can be attempted. Results are uploaded as artifacts.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  capture:
+    name: Build and capture screenshots
+    runs-on: macos-26
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+
+      - name: Build
+        run: ./build.sh
+
+      - name: Locate the app
+        id: app
+        run: |
+          APP=""
+          for c in build/stage/Breeze.app build/Breeze.app; do
+            [ -d "$c" ] && APP="$c" && break
+          done
+          echo "path=$APP" >> "$GITHUB_OUTPUT"
+          echo "app=$APP"
+
+      - name: Launch and capture
+        run: |
+          set -x
+          mkdir -p shots
+          APP="${{ steps.app.outputs.path }}"
+          open "$APP" || true
+          sleep 12
+          # Whole screen (menu bar icon + any window the app shows).
+          screencapture -x shots/full-screen.png || echo "screencapture full failed"
+          # Try to open the menu-bar panel via the status item, then re-capture.
+          osascript -e 'tell application "System Events" to tell process "Breeze" to click menu bar item 1 of menu bar 2' 2>&1 || echo "status-item click failed"
+          sleep 3
+          screencapture -x shots/after-click.png || echo "screencapture after-click failed"
+          # Report what is running and what windows exist.
+          pgrep -fl Breeze || echo "(no Breeze process)"
+          ls -la shots
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: breeze-screenshots
+          path: shots
+          if-no-files-found: warn
