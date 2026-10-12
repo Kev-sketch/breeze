@@ -25,7 +25,7 @@ struct NotchView: View {
             // own departure. A companion that stays to react is drawn over the
             // new strip where it stood, so the swap under it is left
             // unanimated: two of it crossfading in one place would dim it.
-            .transaction(value: service.compactActivity) { transaction in
+            .transactionCompat(value: service.compactActivity) { transaction in
                 guard !reduceMotion, !service.mascotLingers else { return }
                 let arrives = service.compactActivity != nil && service.mascotJustRested
                 let leaves = service.compactActivity == nil && service.mascotAtRest
@@ -186,7 +186,7 @@ struct NotchView: View {
                         activityStrip(activity, size: strip)
                             .frame(width: strip.width, height: layout.headerHeight, alignment: .top)
                             .id(NotchPickedStrip(activity: activity, companion: service.compactCompanion))
-                            .transition(.blurReplace)
+                            .transitionBlurReplaceCompat()
                     }
                     .frame(height: layout.headerHeight, alignment: .top)
                     NotchActivityPicker(activities: service.compactActivities, selected: activity,

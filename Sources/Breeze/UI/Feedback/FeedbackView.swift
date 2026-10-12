@@ -83,7 +83,7 @@ struct FeedbackView: View {
                             }
                         }
                         .frame(minHeight: 145)
-                        .background(.background.secondary, in: RoundedRectangle(cornerRadius: 9))
+                        .backgroundSecondaryCompat(in: RoundedRectangle(cornerRadius: 9))
                         .overlay {
                             RoundedRectangle(cornerRadius: 9)
                                 .strokeBorder(.separator, lineWidth: 1)
