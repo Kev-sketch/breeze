@@ -114,7 +114,7 @@ enum NotchDestinationContract {
     }
 
     static func run(_ suite: TestSuite) {
-        let domain = "com.vorssaint.tests.notch-destinations"
+        let domain = "com.kevsketch.breeze.tests.notch-destinations"
         let defaults = UserDefaults(suiteName: domain)!
         defaults.removePersistentDomain(forName: domain)
         ReviewDefaults.current = defaults

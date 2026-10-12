@@ -1,7 +1,7 @@
-# Pre-launch report — vorssaint-utils (port branch `port/macos-universal`)
+# Pre-launch report — breeze-utils (port branch `port/macos-universal`)
 
 Date: 2026-10-11 · Reviewer: automated pre-launch review · Repo: local clone of
-`github.com/vorssaint/vorssaint-utils`, branch `port/macos-universal`
+`github.com/Kev-sketch/breeze`, branch `port/macos-universal`
 
 ## Verdict at a glance
 
@@ -48,7 +48,7 @@ variable named `token`; localization strings mentioning "token/password").
 **Positives**
 - ✅ `.gitignore` excludes signing material (`*.p12`, `*.pem`, `*.p8`, `*.key`, `*.keychain-db`) and
   build artifacts (`build/`, `dist/`, `*.dmg`).
-- ✅ Entitlements (`Resources/Vorssaint.entitlements`) are minimal hardened-runtime resource grants
+- ✅ Entitlements (`Resources/Breeze.entitlements`) are minimal hardened-runtime resource grants
   (Apple Events, camera, audio input, calendars); app is not sandboxed — expected for this class of
   app.
 - ✅ CI hygiene: `actions/checkout` pinned to a commit SHA, `persist-credentials: false`, and
@@ -64,12 +64,12 @@ variable named `token`; localization strings mentioning "token/password").
   the app-bundled library path.
 
 **Notes / low-risk items**
-- ⚠️ **Hardcoded keychain password** `vorssaint-signing` appears in `build.sh:91` and
+- ⚠️ **Hardcoded keychain password** `breeze-signing` appears in `build.sh:91` and
   `Tools/setup-signing.sh:26`, and the keychain is set to never auto-lock. This protects a *locally
   generated self-signed* identity, not a real secret, so severity is low — but consider prompting for
   a password or generating a random one for the local keychain.
 - ℹ️ Outbound network surface is limited and visible: update checks (GitHub API/releases), the
-  `agent-prices.json` feed from `raw.githubusercontent.com`, and `vorssaint.com` links. No inbound
+  `agent-prices.json` feed from `raw.githubusercontent.com`, and `breeze.example` links. No inbound
   listeners. A privacy doc exists (`docs/PRIVACY.md`).
 - ⚠️ `release.yml` consumes upstream-only secrets (`SIGNING_CERT_P12`, `NOTARY_*`). A fork must never
   attempt to reuse upstream's signing identity — see Area 5.
@@ -96,14 +96,14 @@ variable named `token`; localization strings mentioning "token/password").
   without it.
 - ✅ License (`LICENSE`, GPL-3.0-or-later) and `TRADEMARKS.md`/`SECURITY.md`/`SUPPORT.md` preserved.
 - ✅ The two new port documents are intended additions.
-- ⚠️ **Repo bloat:** `docs/demo.gif` is **30.5 MB**, plus `ReleaseAssets/vorssaint-3.1.4-showcase-1.mp4`
+- ⚠️ **Repo bloat:** `docs/demo.gif` is **30.5 MB**, plus `ReleaseAssets/breeze-3.1.4-showcase-1.mp4`
   (2.6 MB) and several multi-MB GIFs. Not blocking, but heavy for clones; consider Git LFS or hosting
   demo media in Releases.
 
 ## Area 5 — GitHub publication  ❌ BLOCKER
 
 - Authenticated account: **`Kev-sketch`**.
-- Remotes in this clone: **only `upstream`** → `vorssaint/vorssaint-utils` (read-only). **There is no
+- Remotes in this clone: **only `upstream`** → `Kev-sketch/breeze` (read-only). **There is no
   `origin` remote.**
 - Working tree: the port changes are **uncommitted** (`Package.swift`, `README.md`, `build.sh` modified;
   `PORTING-macos-legacy.md`, `FEATURE-HARDWARE-COMPAT.md`, `PRELAUNCH-REPORT.md` untracked).
@@ -123,10 +123,10 @@ before launch.
    - Push the branch (and `main`/tags as desired).
    - **Decision needed:** repository name and visibility (public vs private).
 2. **Produce and verify a real build.** Build on a macOS 26-SDK host (or the CI `macos-26` runner) and
-   run the universal `.app` on macOS 13 Intel **and** Apple Silicon. `lipo -info build/Vorssaint`
+   run the universal `.app` on macOS 13 Intel **and** Apple Silicon. `lipo -info build/Breeze`
    should read `x86_64 arm64`.
 3. **Fork release pipeline.** `release.yml` is hard-gated to `github.repository ==
-   'vorssaint/vorssaint-utils'` and actor `vorssaint`, and needs upstream secrets. In the fork it will
+   'Kev-sketch/breeze'` and actor `breeze`, and needs upstream secrets. In the fork it will
    never run. To ship signed/notarized releases you must edit the workflow and supply your own
    Developer ID + notary credentials — or distribute local builds (ad-hoc signed).
 

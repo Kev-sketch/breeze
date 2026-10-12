@@ -5,7 +5,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "Vorssaint",
+    name: "Breeze",
     // Lowered from .v14 to .v13 by the legacy-OS port: SMAppService (used
     // unguarded for login-item / fan-control daemon registration) is the
     // youngest API the app depends on, and it requires macOS 13.0. See
@@ -21,9 +21,9 @@ let package = Package(
             path: "Sources/VMStatisticsCompat"
         ),
         .executableTarget(
-            name: "Vorssaint",
+            name: "Breeze",
             dependencies: ["VMStatisticsCompat", "HIDEventSystem"],
-            path: "Sources/Vorssaint"
+            path: "Sources/Breeze"
         )
     ]
 )

@@ -1,16 +1,32 @@
-# Trademarks
+# Trademarks and attribution
 
-The source code in this repository is licensed under GPL-3.0-or-later. That
-license covers copyright in the source code only.
+**Breeze** is an **unofficial fork** of the [Vorssaint](https://github.com/vorssaint/vorssaint-utils)
+project. The original source is licensed under GPL-3.0-or-later; that license covers
+copyright in the source code only.
 
-The GPL license does not grant permission to use the Vorssaint name, logo, icon,
-bundle identity, trade dress, official branding, or any signing identity
-controlled by the project maintainer.
+## Original project (upstream)
 
-Official Vorssaint builds are distributed only by the project maintainer.
-Unofficial forks and redistributed builds must use a different name, app icon,
-bundle identifier, signing identity, update feed, and any other branding that
-could imply endorsement or official status.
+The original **Vorssaint** name, logo, icon, bundle identity, trade dress and signing
+identity belong to the upstream project and are **not** claimed by this fork. Upstream
+copyright notices are retained verbatim in every source file (see the `Copyright (C) 2026
+Vorssaint` header line), as GPL-3.0-or-later requires.
 
-Do not present a modified build as Vorssaint or as an official release unless
-you have explicit permission from the project maintainer.
+## This fork
+
+- Uses its own name (**Breeze**), bundle identifier (`com.kevsketch.breeze.utils`), and
+  signing identity ("Breeze Signing"), so it can coexist with upstream and does not imply
+  endorsement or official status.
+- Inherits the source under GPL-3.0-or-later. Fork-specific modifications are
+  © 2026 Kev-sketch.
+
+## Brand artwork
+
+The bundled app icon and brandmark (`Resources/Brand/**`, `docs/assets/readme/logo*.svg`)
+are inherited from upstream and remain **upstream's reserved brand material**, excluded
+from the GPL. They are placeholders here and should be replaced with original artwork
+before any serious redistribution.
+
+## In short
+
+Do not present this fork as Vorssaint, and do not present upstream as Breeze. They are
+different projects that share a codebase.

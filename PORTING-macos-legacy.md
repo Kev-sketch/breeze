@@ -1,11 +1,11 @@
-# PORTING-macos-legacy.md — Vorssaint on macOS (universal: Intel + Apple Silicon, floor macOS 13)
+# PORTING-macos-legacy.md — Breeze on macOS (universal: Intel + Apple Silicon, floor macOS 13)
 
 > Legacy-OS port produced with the `legacy-os-port` skill. This file is the port's memory: it lets a
 > future session pick up the work without re-discovering anything.
 
 ## 1. Summary
 
-- **Upstream:** https://github.com/vorssaint/vorssaint-utils @ `upstream-main` (grafted tag on `port/macos-universal`)
+- **Upstream:** https://github.com/Kev-sketch/breeze @ `upstream-main` (grafted tag on `port/macos-universal`)
 - **Port target:** a **universal binary (arm64 + x86_64)** so the app runs natively on **both Apple
   Silicon and Intel Macs**; deployment floor lowered from **macOS 14.0 → macOS 13.0 (Ventura)**.
 - **Status:** build configuration changed and the **universal build mechanism is verified** at the
@@ -121,20 +121,20 @@ Not yet populated. Runtime verification requires:
 ## 7. How to build
 
 1. On a Mac with **Xcode 26 (or newer) Command Line Tools** (provides the macOS 26 SDK + Swift 5.9+).
-2. `./build.sh --dev` → compiles the universal `Vorssaint (Developer)` variant into a `.app` bundle.
+2. `./build.sh --dev` → compiles the universal `Breeze (Developer)` variant into a `.app` bundle.
    (`./build.sh --dev --install` installs and launches it.)
-3. Confirm the slices: `lipo -info build/Vorssaint` → `x86_64 arm64`.
+3. Confirm the slices: `lipo -info build/Breeze` → `x86_64 arm64`.
 4. To validate the lowered floor, build and run on a macOS 13 machine (Intel and Apple Silicon).
 
 ## 8. How to publish
 
-- Fork remotes: `origin` → your fork, `upstream` → `https://github.com/vorssaint/vorssaint-utils`
+- Fork remotes: `origin` → your fork, `upstream` → `https://github.com/Kev-sketch/breeze`
   (kept read-only; never push to it).
 - Branch: `port/macos-universal`; fork-point tag: `upstream-main`.
 - Tag releases `<upstream-version>-macos-universal`.
 - Attach the built universal `.dmg` to a release so users don't have to build it.
 - Keep upstream's GPL-3.0-or-later license and attribution; per `TRADEMARKS.md`, give the fork its own
-  bundle identity (the `--dev` variant already uses `com.vorssaint.utils.dev`). Drop upstream's release
+  bundle identity (the `--dev` variant already uses `com.kevsketch.breeze.utils.dev`). Drop upstream's release
   pipelines that depend on upstream's signing secrets.
 
 ## 9. Known limitations

@@ -1,4 +1,4 @@
-# Feature hardware/design compatibility — vorssaint-utils on THIS laptop
+# Feature hardware/design compatibility — breeze-utils on THIS laptop
 
 Target machine for this audit (identified during the legacy-OS port recon):
 
@@ -25,7 +25,7 @@ How to read a verdict:
 
 ## Hard incompatibilities with this laptop
 
-### ❌ Extra brightness (XDR HDR headroom) — `Sources/Vorssaint/Services/Display/ExtraBrightnessService.swift`
+### ❌ Extra brightness (XDR HDR headroom) — `Sources/Breeze/Services/Display/ExtraBrightnessService.swift`
 - **Dependency:** a built-in **XDR display with EDR (extended dynamic range) headroom**. The class
   comment states it "pushes the built-in XDR display past its regular maximum brightness by using the
   panel's HDR headroom," and its availability probe is literally *"a built-in display with EDR headroom
@@ -35,7 +35,7 @@ How to read a verdict:
   Pro Display XDR qualify.)
 - **Fix:** none for this hardware; it is a genuine panel capability gap.
 
-### ⚠️ Dynamic Island / Notch — `Sources/Vorssaint/Services/Notch/`, `Sources/Vorssaint/UI/Notch/`
+### ⚠️ Dynamic Island / Notch — `Sources/Breeze/Services/Notch/`, `Sources/Breeze/UI/Notch/`
 - **Dependency:** a **physical display notch / camera cutout** (2021+ 14″/16″ MacBook Pro, MacBook Air
   M2+). `NotchSupport.swift` (lines 112–119) describes the silhouette options and notes *"a physical
   camera always keeps the cutout it covers."* The default silhouette is `capsule` — a pill floating in
@@ -44,15 +44,15 @@ How to read a verdict:
   **simulated** mode (a drawn capsule/cutout over the menu bar), not wrapped around real hardware. It is
   cosmetic-only realism loss, not a functional break.
 - **Secondary incompatibility:** the macOS 26 **Liquid Glass** rendering of the island/windows is gated
-  by `LiquidGlassSupport.isSupported` (`Sources/Vorssaint/Core/LiquidGlassSupport.swift:13` — true only
+  by `LiquidGlassSupport.isSupported` (`Sources/Breeze/Core/LiquidGlassSupport.swift:13` — true only
   on macOS 26+). On 13.7.8 the glass styling is disabled; the non-glass island renders.
 
-### ❌ Liquid Glass visuals (macOS 26) — `Sources/Vorssaint/Core/LiquidGlassSupport.swift`
+### ❌ Liquid Glass visuals (macOS 26) — `Sources/Breeze/Core/LiquidGlassSupport.swift`
 - **Dependency:** **macOS 26 or later** native Liquid Glass. `isSupported` returns false below 26.
 - **Incompatibility:** this laptop runs **13.7.8**, so every Liquid Glass surface (notch island, window
   backgrounds, etc.) renders in the pre-26 flat style. Graceful fallback; not a crash.
 
-### ⚠️ Discrete-GPU reading in System Monitor — `Sources/Vorssaint/Services/SystemMonitor/`
+### ⚠️ Discrete-GPU reading in System Monitor — `Sources/Breeze/Services/SystemMonitor/`
 - **Dependency:** a **discrete GPU** thermal/power sensor (the SMC `gpu` key set in
   `FanControlHardware.swift:35-36` is the thermal analogue).
 - **Incompatibility:** this laptop has **integrated graphics only**. A discrete-GPU tile/temperature is

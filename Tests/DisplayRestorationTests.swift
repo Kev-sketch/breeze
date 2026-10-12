@@ -127,7 +127,7 @@ enum DisplayRestorationTests {
     }
 
     class Fixture {
-        static let log = Logger(subsystem: "vorssaint.tests", category: "restoration")
+        static let log = Logger(subsystem: "breeze.tests", category: "restoration")
         var deferredRestoration = BrightnessSupport.DeferredDisplayRestoration()
         var lidNotificationPort: IONotificationPortRef?
         var lidNotification: io_object_t = 0

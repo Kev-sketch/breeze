@@ -8,7 +8,7 @@ import SwiftUI
 
 enum NotchTests {
     private static func railContracts(_ suite: TestSuite) {
-        let domain = "com.vorssaint.tests.notch-fan-only"
+        let domain = "com.kevsketch.breeze.tests.notch-fan-only"
         let defaults = UserDefaults(suiteName: domain)!
         defaults.removePersistentDomain(forName: domain)
         defer { defaults.removePersistentDomain(forName: domain) }
@@ -757,7 +757,7 @@ enum NotchTests {
         suite.expect(extreme.width == 10 && extreme.height == -6, "a fit stays within its ranges")
         suite.expect(NotchCameraFit(width: .nan, height: .infinity) == .zero, "an unreadable fit means none")
 
-        let domain = "com.vorssaint.tests.notch-camera-fit"
+        let domain = "com.kevsketch.breeze.tests.notch-camera-fit"
         let defaults = UserDefaults(suiteName: domain)!
         defaults.removePersistentDomain(forName: domain)
         defer { defaults.removePersistentDomain(forName: domain) }
@@ -1100,7 +1100,7 @@ enum NotchTests {
         NotchMusicExtrasTests.run(suite)
         NotchLockScreenTests.run(suite)
         NowPlayingOpenContract.run(suite)
-        let domain = "com.vorssaint.tests.notch"
+        let domain = "com.kevsketch.breeze.tests.notch"
         let defaults = UserDefaults(suiteName: domain)!
         defaults.removePersistentDomain(forName: domain)
         defer { defaults.removePersistentDomain(forName: domain) }
@@ -1113,7 +1113,7 @@ enum NotchTests {
             defaults.set(value, forKey: key)
         }
         for (key, value) in AppFeature.availabilityDefaults { defaults.set(value, forKey: key) }
-        let firstInstall = "com.vorssaint.tests.notch-new-\(UUID().uuidString)"
+        let firstInstall = "com.kevsketch.breeze.tests.notch-new-\(UUID().uuidString)"
         let fresh = UserDefaults(suiteName: firstInstall)!
         defer { fresh.removePersistentDomain(forName: firstInstall) }
         fresh.set(NotchControlItem.defaultHidden, forKey: DefaultsKey.notchHiddenControls)
@@ -1146,7 +1146,7 @@ enum NotchTests {
         suite.expect(firstDefaults[DefaultsKey.notchIncludeOtherPlayers] as? Bool == true,
                      "new island setups follow every player unless limited to music apps")
 
-        let priorInstall = "com.vorssaint.tests.notch-existing-\(UUID().uuidString)"
+        let priorInstall = "com.kevsketch.breeze.tests.notch-existing-\(UUID().uuidString)"
         let existing = UserDefaults(suiteName: priorInstall)!
         defer { existing.removePersistentDomain(forName: priorInstall) }
         existing.set(true, forKey: DefaultsKey.notchEnabled)
@@ -1178,7 +1178,7 @@ enum NotchTests {
         suite.expect(!existing.bool(forKey: DefaultsKey.notchAppPanel),
                      "the one-time migration does not run again after a later preference change")
 
-        let priorChoice = "com.vorssaint.tests.notch-choice-\(UUID().uuidString)"
+        let priorChoice = "com.kevsketch.breeze.tests.notch-choice-\(UUID().uuidString)"
         let configured = UserDefaults(suiteName: priorChoice)!
         defer { configured.removePersistentDomain(forName: priorChoice) }
         configured.set(true, forKey: DefaultsKey.notchReturnHome)
@@ -1449,7 +1449,7 @@ enum NotchTests {
                      "the keyboard light level is opt-in and follows the brightness feature")
         suite.expect(lightNeedsHardware,
                      "a level restored from a Mac with a keyboard light stays out of an island without one")
-        let launch = (try? String(contentsOfFile: "Sources/Vorssaint/main.swift", encoding: .utf8)) ?? ""
+        let launch = (try? String(contentsOfFile: "Sources/Breeze/main.swift", encoding: .utf8)) ?? ""
         suite.expect(launch.contains("NotchControlItem.keyboardLightIsSupported = { BrightnessService.keyboardLightIsSupported }"),
                      "launch asks the brightness service whether this Mac has a keyboard light")
         suite.expect(NotchLayout.levelCardsShowDetails([.volume, .brightness], height: 96)
@@ -1458,8 +1458,8 @@ enum NotchTests {
                      && !NotchLayout.levelCardsShowDetails([.brightness, .keyboardLight], height: 96)
                      && !NotchLayout.levelCardsShowDetails([.volume, .brightness, .keyboardLight], height: 96),
                      "level cards fold to their readouts beside the keyboard light and three across")
-        let controlsView = (try? String(contentsOfFile: "Sources/Vorssaint/UI/Notch/NotchControlsView.swift", encoding: .utf8)) ?? ""
-        let layoutEditor = (try? String(contentsOfFile: "Sources/Vorssaint/UI/Settings/NotchLayoutEditor.swift", encoding: .utf8)) ?? ""
+        let controlsView = (try? String(contentsOfFile: "Sources/Breeze/UI/Notch/NotchControlsView.swift", encoding: .utf8)) ?? ""
+        let layoutEditor = (try? String(contentsOfFile: "Sources/Breeze/UI/Settings/NotchLayoutEditor.swift", encoding: .utf8)) ?? ""
         suite.expect(controlsView.contains("let details = NotchLayout.levelCardsShowDetails(levels, height: height)")
                      && controlsView.contains("level(item, style: .card, showsDevice: details)")
                      && layoutEditor.contains("let details = NotchLayout.levelCardsShowDetails(levels, height: height)")
@@ -2526,7 +2526,7 @@ enum NotchTests {
                "invalid internal positions cannot be serialized into adapter input")
     }
     private static func calendarContracts(_ suite: TestSuite) {
-        let entitlements = NSDictionary(contentsOfFile: "Resources/Vorssaint.entitlements") as? [String: Any]
+        let entitlements = NSDictionary(contentsOfFile: "Resources/Breeze.entitlements") as? [String: Any]
         let info = NSDictionary(contentsOfFile: "Resources/Info.plist") as? [String: Any]
         suite.expect(entitlements?["com.apple.security.personal-information.calendars"] as? Bool == true
                && !(info?["NSCalendarsFullAccessUsageDescription"] as? String ?? "").isEmpty,
@@ -2555,9 +2555,9 @@ enum NotchTests {
                && !NotchSupport.keepsPermissionSurface(requesting: false, resolvedAt: 10, now: 11)
                && !NotchSupport.keepsPermissionSurface(requesting: false, resolvedAt: 10, now: 9),
                "permission resolution protects only the short reactivation interval")
-        let defaults = UserDefaults(suiteName: "com.vorssaint.tests.notch-calendar")!
-        defaults.removePersistentDomain(forName: "com.vorssaint.tests.notch-calendar")
-        defer { defaults.removePersistentDomain(forName: "com.vorssaint.tests.notch-calendar") }
+        let defaults = UserDefaults(suiteName: "com.kevsketch.breeze.tests.notch-calendar")!
+        defaults.removePersistentDomain(forName: "com.kevsketch.breeze.tests.notch-calendar")
+        defer { defaults.removePersistentDomain(forName: "com.kevsketch.breeze.tests.notch-calendar") }
         for (key, value) in Defaults.registeredDefaults where key.hasPrefix("notch") { defaults.set(value, forKey: key) }
         for (key, value) in AppFeature.availabilityDefaults { defaults.set(value, forKey: key) }
         suite.expect(!NotchCalendarSupport.isEnabled(in: defaults), "calendar starts off")
@@ -2896,7 +2896,7 @@ enum NotchTests {
                    && label.contains("52") && !words.isEmpty,
                    "VoiceOver reads a row's week number as that week in \(language.rawValue)")
         }
-        let monthView = (try? String(contentsOfFile: "Sources/Vorssaint/UI/Notch/NotchCalendarMonthView.swift",
+        let monthView = (try? String(contentsOfFile: "Sources/Breeze/UI/Notch/NotchCalendarMonthView.swift",
                                      encoding: .utf8)) ?? ""
         let weekNumberView = monthView.components(separatedBy: "struct NotchCalendarWeekNumber: View {").last ?? ""
         suite.expect(monthView.components(separatedBy: "NotchCalendarWeekNumber(date: date, text: text,").count == 3

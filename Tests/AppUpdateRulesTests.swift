@@ -7,7 +7,7 @@ import Foundation
 /// counters in place of scanning, scheduling and notifications.
 enum AppUpdateRulesContract {
     enum UserDefaults {
-        static let name = "vorss.tests.app-update-rules.\(UUID().uuidString)"
+        static let name = "breeze.tests.app-update-rules.\(UUID().uuidString)"
         static let standard = Foundation.UserDefaults(suiteName: name)!
     }
 

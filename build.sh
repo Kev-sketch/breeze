@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Copyright (C) 2026 Vorssaint
 
-# Builds Vorssaint, assembles the .app bundle, signs it and (with --install)
+# Builds Breeze, assembles the .app bundle, signs it and (with --install)
 # installs it into /Applications.
 #
 # The bundle is staged in a temporary directory outside ~/Documents: folders synced
@@ -26,7 +26,7 @@ trap cleanup EXIT
 # into the build sweeps like any other ending.
 trap 'exit 1' INT TERM HUP
 
-# Flags: --dev builds the local-only "Vorssaint (Developer)" variant (its own
+# Flags: --dev builds the local-only "Breeze (Developer)" variant (its own
 # bundle id, so it coexists with the official app); --install puts it in /Applications.
 DEV=0
 INSTALL=0
@@ -43,16 +43,16 @@ for arg in "$@"; do
 done
 
 if (( DEV )); then
-    APP_NAME="Vorssaint (Developer)"
-    EXECUTABLE="VorssaintDeveloper"
-    APP_BUNDLE_ID="com.vorssaint.utils.dev"
-    BUILD_VARIANT_FLAGS=(-D VORSSAINT_DEVELOPMENT)
+    APP_NAME="Breeze (Developer)"
+    EXECUTABLE="BreezeDeveloper"
+    APP_BUNDLE_ID="com.kevsketch.breeze.utils.dev"
+    BUILD_VARIANT_FLAGS=(-D BREEZE_DEVELOPMENT)
     APP_OPTIMIZATION_FLAGS=(-Onone)
     BUILD_CONFIGURATION="debug"
 else
-    APP_NAME="Vorssaint"
-    EXECUTABLE="Vorssaint"
-    APP_BUNDLE_ID="com.vorssaint.utils"
+    APP_NAME="Breeze"
+    EXECUTABLE="Breeze"
+    APP_BUNDLE_ID="com.kevsketch.breeze.utils"
     BUILD_VARIANT_FLAGS=()
     APP_OPTIMIZATION_FLAGS=(-O)
     BUILD_CONFIGURATION="release"
@@ -61,7 +61,7 @@ FAN_HELPER_ID="$APP_BUNDLE_ID.fan-control"
 # Now Playing is read through /usr/bin/perl loading this library; see
 # Sources/NowPlayingAdapter. Staged under Contents/Frameworks, signed on its own.
 NOW_PLAYING_ADAPTER_ID="$APP_BUNDLE_ID.now-playing"
-NOW_PLAYING_ADAPTER="libVorssaintNowPlaying.dylib"
+NOW_PLAYING_ADAPTER="libBreezeNowPlaying.dylib"
 # --- Universal binary support: Apple Silicon (arm64) + Intel (x86_64) ---
 # Upstream built arm64 only. This port produces a universal (fat) binary so the
 # app runs natively on both Apple Silicon and Intel Macs. Deployment floor dropped
@@ -71,8 +71,8 @@ MACOS_DEPLOYMENT_TARGET=13.0
 ARCHS=(arm64 x86_64)
 NATIVE_TARGET="$(uname -m)-apple-macosx${MACOS_DEPLOYMENT_TARGET}"
 TARGET="arm64-apple-macosx${MACOS_DEPLOYMENT_TARGET}"
-ENTITLEMENTS="Resources/Vorssaint.entitlements"
-LEGACY_IDENTITY="Vorssaint Utils Signing"
+ENTITLEMENTS="Resources/Breeze.entitlements"
+LEGACY_IDENTITY="Breeze Signing"
 
 developer_id_identity() {
     security find-identity -v -p codesigning 2>/dev/null \
@@ -88,8 +88,8 @@ legacy_identity_installed() {
     local probe signed=1
     # A locked keychain still lists its identities but cannot sign with them,
     # and this one is locked after every reboot; unlock it before asking.
-    security unlock-keychain -p vorssaint-signing \
-        "$HOME/Library/Keychains/vorssaint-signing.keychain-db" 2>/dev/null || true
+    security unlock-keychain -p breeze-signing \
+        "$HOME/Library/Keychains/breeze-signing.keychain-db" 2>/dev/null || true
     probe="$(mktemp)"
     cp /bin/echo "$probe"
     /usr/bin/codesign --force --strip-disallowed-xattrs --sign "$LEGACY_IDENTITY" "$probe" \
@@ -192,8 +192,8 @@ finalize_installed_bundle_after_child() {
     echo "✓ Signature ready: $bundle"
 }
 
-if (( INSTALL && ! TEST )) && [[ "${VORSSAINT_INSTALL_CHILD:-0}" != "1" ]]; then
-    VORSSAINT_INSTALL_CHILD=1 "$0" "$@"
+if (( INSTALL && ! TEST )) && [[ "${BREEZE_INSTALL_CHILD:-0}" != "1" ]]; then
+    BREEZE_INSTALL_CHILD=1 "$0" "$@"
     child_status=$?
     if (( child_status != 0 )); then
         exit "$child_status"
@@ -248,13 +248,13 @@ discard_test_preferences() {
     # cfprefsd can recreate an emptied domain after the first removal. Require
     # two quiet checks, but keep a hard limit so persistent failures still fail CI.
     for attempt in {1..10}; do
-        for name in "vorss.tests." "com.vorssaint.tests."; do
+        for name in "breeze.tests." "com.kevsketch.breeze.tests."; do
             rm -f "$preferences"/$name*.plist(N)
         done
         rm -f "$preferences/metrics-tests.plist"
         sleep 0.2
         survivors=$(find "$preferences" -maxdepth 1 \
-            \( -name "vorss.tests.*.plist" -o -name "com.vorssaint.tests.*.plist" \
+            \( -name "breeze.tests.*.plist" -o -name "com.kevsketch.breeze.tests.*.plist" \
                -o -name "metrics-tests.plist" \) 2>/dev/null | wc -l | tr -d ' ')
         if [[ "$survivors" == "0" ]]; then
             quiet_passes=$((quiet_passes + 1))
@@ -274,303 +274,303 @@ if (( TEST )); then
     TEST_OBJECT_DIR="build/objects/tests"
     mkdir -p "$TEST_OBJECT_DIR"
     TEST_SOURCES=(
-        Sources/Vorssaint/Services/Media/MediaSupport.swift
-        Sources/Vorssaint/Core/QuitProtectionSupport.swift
-        Sources/Vorssaint/Core/QuitProtectionStrings.swift
-        Sources/Vorssaint/Core/Defaults.swift
-        Sources/Vorssaint/Core/NotchStrings.swift
-        Sources/Vorssaint/Core/NotchTourStrings.swift
-        Sources/Vorssaint/Core/NotchEditorStrings.swift
-        Sources/Vorssaint/UI/Settings/NotchSettingsTabRow.swift
-        Sources/Vorssaint/Core/NotchActivityStrings.swift
-        Sources/Vorssaint/Services/Notch/NotchTimerSupport.swift
-        Sources/Vorssaint/Services/Notch/NotchTimerAlert.swift
-        Sources/Vorssaint/UI/Notch/NotchIslandAlert.swift
-        Sources/Vorssaint/Services/Notch/NotchAccessorySupport.swift
-        Sources/Vorssaint/Services/QuickTools/CameraPreviewSupport.swift
-        Sources/Vorssaint/Core/NotchMusicExtrasStrings.swift
-        Sources/Vorssaint/Services/Notch/NotchLyricsSupport.swift
-        Sources/Vorssaint/Services/Notch/NotchQueueSupport.swift
-        Sources/Vorssaint/Services/Notch/NotchPreferredPlayer.swift
-        Sources/Vorssaint/Core/NotchFilesStrings.swift
-        Sources/Vorssaint/Core/NotchWatchStrings.swift
-        Sources/Vorssaint/Services/Notch/NotchWatchSupport.swift
-        Sources/Vorssaint/Core/NotchMascotStrings.swift
-        Sources/Vorssaint/Services/Notch/NotchMascotSupport.swift
-        Sources/Vorssaint/Services/CommandBar/CommandBarDropletMotion.swift
-        Sources/Vorssaint/Services/Notch/NotchFileToolsSupport.swift
-        Sources/Vorssaint/Services/Notch/NotchDownloadSupport.swift
-        Sources/Vorssaint/Services/Notch/NotchDownloadProgressObserver.swift
-        Sources/Vorssaint/Core/NotchCalendarStrings.swift
-        Sources/Vorssaint/Core/NotchNotificationStrings.swift
-        Sources/Vorssaint/Core/NotchGestureStrings.swift
-        Sources/Vorssaint/Core/NotchAgentStrings.swift
-        Sources/Vorssaint/Services/Notch/NotchAgentSupport.swift
-        Sources/Vorssaint/Core/NotchLockScreenStrings.swift
-        Sources/Vorssaint/Services/Notch/NotchLockScreenSupport.swift
-        Sources/Vorssaint/Services/AgentUsage/AgentUsageModels.swift
-        Sources/Vorssaint/Services/AgentUsage/AgentPricing.swift
-        Sources/Vorssaint/Services/AgentUsage/AgentLogObject.swift
-        Sources/Vorssaint/Services/AgentUsage/AgentLogParser.swift
-        Sources/Vorssaint/Services/AgentUsage/AgentUsageSummary.swift
-        Sources/Vorssaint/Services/AgentUsage/AgentUsageStore.swift
-        Sources/Vorssaint/Services/AgentUsage/AgentUsageArchive.swift
-        Sources/Vorssaint/Services/AgentUsage/AgentClaudeAppUsage.swift
-        Sources/Vorssaint/Services/AgentUsage/AgentCodexServer.swift
-        Sources/Vorssaint/Services/AgentUsage/AgentOpenCodeReader.swift
-        Sources/Vorssaint/Services/Notch/NotchGestureSupport.swift
-        Sources/Vorssaint/Services/Notch/NotchSectionPaging.swift
-        Sources/Vorssaint/Services/Notch/NotchSliderEditing.swift
-        Sources/Vorssaint/Services/Notch/NotchNotificationSupport.swift
-        Sources/Vorssaint/Services/Notch/NotchNotificationReaderCore.swift
-        Sources/Vorssaint/Services/Notch/NotchCalendarSupport.swift
-        Sources/Vorssaint/Services/Notch/NotchKeepAwakeSupport.swift
-        Sources/Vorssaint/Services/Notch/NotchSupport.swift
-        Sources/Vorssaint/Services/Notch/NotchAudioLevelSupport.swift
-        Sources/Vorssaint/Services/Notch/NotchVolumeKeyGate.swift
-        Sources/Vorssaint/Services/Notch/NotchMusicSupport.swift
-        Sources/Vorssaint/UI/Notch/NotchDecorativeClock.swift
-        Sources/Vorssaint/UI/Notch/NotchEqualizerBars.swift
-        Sources/Vorssaint/UI/Notch/NotchScrollEdgeFade.swift
-        Sources/Vorssaint/UI/Notch/NotchAgentAnimationView.swift
-        Sources/Vorssaint/UI/WindowVisibilityReader.swift
-        Sources/Vorssaint/Services/Notch/NotchMusicAutomationSupport.swift
-        Sources/Vorssaint/Services/Notch/NotchMusicAutomation.swift
-        Sources/Vorssaint/Services/Notch/NotchPlaybackSource.swift
-        Sources/Vorssaint/Services/Notch/NotchPlaybackCommand.swift
-        Sources/Vorssaint/Services/Notch/NotchMusicCommandWriter.swift
-        Sources/Vorssaint/Core/FeatureCatalog.swift
-        Sources/Vorssaint/Core/FeaturePresets.swift
-        Sources/Vorssaint/Core/FeatureHubStrings.swift
-        Sources/Vorssaint/Core/ShortcutSettingsStrings.swift
-        Sources/Vorssaint/Core/SettingsBackupSupport.swift
-        Sources/Vorssaint/Core/BackupStrings.swift
-        Sources/Vorssaint/Core/SnippetStrings.swift
-        Sources/Vorssaint/Core/AlertSoundStrings.swift
-        Sources/Vorssaint/Core/BrightnessStrings.swift
-        Sources/Vorssaint/Core/MediaImageStrings.swift
-        Sources/Vorssaint/Core/QuickToggleStrings.swift
-        Sources/Vorssaint/Core/ScreenshotStrings.swift
-        Sources/Vorssaint/Core/RecentCaptureStrings.swift
-        Sources/Vorssaint/Core/RecorderStrings.swift
-        Sources/Vorssaint/Core/RecorderShareStrings.swift
-        Sources/Vorssaint/Core/CameraPreviewStrings.swift
-        Sources/Vorssaint/Core/WallpaperStrings.swift
-        Sources/Vorssaint/Services/Wallpaper/WallpaperSupport.swift
-        Sources/Vorssaint/Core/ScratchpadStrings.swift
-        Sources/Vorssaint/Core/FinderRenameStrings.swift
-        Sources/Vorssaint/Core/CommandBarStrings.swift
-        Sources/Vorssaint/Core/FeedbackStrings.swift
-        Sources/Vorssaint/Core/RadialMenuStrings.swift
-        Sources/Vorssaint/Core/MenuBarAppearanceStrings.swift
-        Sources/Vorssaint/Core/AppAppearance.swift
-        Sources/Vorssaint/Core/AppearanceStrings.swift
-        Sources/Vorssaint/Core/GeneralSettingsStrings.swift
-        Sources/Vorssaint/Core/SettingsPageStrings.swift
-        Sources/Vorssaint/Core/BatteryTimeStrings.swift
-        Sources/Vorssaint/Core/CPUCoreStrings.swift
-        Sources/Vorssaint/Core/MonitorLayoutStrings.swift
-        Sources/Vorssaint/Core/KeepAwakeStrings.swift
-        Sources/Vorssaint/Core/BluetoothSleepStrings.swift
-        Sources/Vorssaint/Core/PermissionGuideStrings.swift
-        Sources/Vorssaint/Core/FanControlStrings.swift
-        Sources/Vorssaint/Core/ConnectedDevicesStrings.swift
-        Sources/Vorssaint/Services/FanControl/FanControlSupport.swift
-        Sources/Vorssaint/Services/FanControl/FanControlResumeSupport.swift
-        Sources/Vorssaint/Services/Snippets/TextSnippetSupport.swift
-        Sources/Vorssaint/Services/RadialMenu/RadialMenuSupport.swift
-        Sources/Vorssaint/Services/QuickTools/ScratchpadSupport.swift
-        Sources/Vorssaint/Services/QuickTools/ScratchpadStore.swift
-        Sources/Vorssaint/Services/KillProcess/KillProcessSupport.swift
-        Sources/Vorssaint/Services/Recorder/RecorderSupport.swift
-        Sources/Vorssaint/Services/Recorder/RecorderSampleTiming.swift
-        Sources/Vorssaint/Services/Recorder/RecorderWriter.swift
-        Sources/Vorssaint/Services/Recorder/RecorderCaptureEngine.swift
-        Sources/Vorssaint/Core/RecorderExportStrings.swift
-        Sources/Vorssaint/Services/Recorder/RecorderComposer.swift
-        Sources/Vorssaint/Services/Recorder/RecorderComposerPlan.swift
-        Sources/Vorssaint/Services/Recorder/RecorderCursorSprite.swift
-        Sources/Vorssaint/Services/Recorder/RecorderTextRenderer.swift
-        Sources/Vorssaint/Services/Recorder/RecorderImageRenderer.swift
-        Sources/Vorssaint/Services/Recorder/RecorderExporter.swift
-        Sources/Vorssaint/Services/Recorder/RecorderGIFClipboard.swift
-        Sources/Vorssaint/Services/Recorder/RecorderComposition.swift
-        Sources/Vorssaint/Services/Recorder/RecordingSharingSupport.swift
-        Sources/Vorssaint/Services/PrivateFileStore.swift
-        Sources/Vorssaint/Services/Recorder/RecorderTakeStore.swift
-        Sources/Vorssaint/Services/Recorder/RecorderPresetImageStore.swift
-        Sources/Vorssaint/Services/Recorder/RecorderMotion.swift
-        Sources/Vorssaint/Services/Recorder/RecorderPointerTrack.swift
-        Sources/Vorssaint/Services/Recorder/RecorderTypingTrack.swift
-        Sources/Vorssaint/Services/Recorder/RecorderTimeline.swift
-        Sources/Vorssaint/Services/Recorder/RecorderTextOverlay.swift
-        Sources/Vorssaint/Services/Recorder/RecorderImageOverlay.swift
-        Sources/Vorssaint/Services/Recorder/RecorderBlurRegion.swift
-        Sources/Vorssaint/Services/Recorder/RecorderEditDocument.swift
-        Sources/Vorssaint/Core/AppInfo.swift
-        Sources/Vorssaint/Core/GlobalShortcut.swift
-        Sources/Vorssaint/Core/SymbolicHotKeys.swift
-        Sources/Vorssaint/Services/SystemShortcutTakeoverSupport.swift
-        Sources/Vorssaint/Core/Localization.swift
-        Sources/Vorssaint/Core/Localizations/Strings+*.swift
-        Sources/Vorssaint/Core/FeatureStrings.swift
-        Sources/Vorssaint/Core/KillProcessStrings.swift
-        Sources/Vorssaint/Core/PortManagerStrings.swift
-        Sources/Vorssaint/Core/WhatsAppDownloadStrings.swift
-        Sources/Vorssaint/Core/WhatsAppOrganizerStrings.swift
-        Sources/Vorssaint/Core/ReleaseNotes.swift
-        Sources/Vorssaint/Core/URLCleaning.swift
-        Sources/Vorssaint/Services/GeneralPasteboardAccess.swift
-        Sources/Vorssaint/Services/Clipboard/ClipboardHistoryWrite.swift
-        Sources/Vorssaint/Services/Audio/AirPlayRouteManager.swift
-        Sources/Vorssaint/Services/Audio/MixerRoutingSupport.swift
-        Sources/Vorssaint/Services/Audio/MusicLaunchSupport.swift
-        Sources/Vorssaint/Services/Bluetooth/BluetoothSleepSupport.swift
-        Sources/Vorssaint/UI/MenuPanel/MixerPercentNativeTextField.swift
-        Sources/Vorssaint/UI/MenuPanel/MixerAppDragSource.swift
-        Sources/Vorssaint/Services/Audio/BoostLimiter.swift
-        Sources/Vorssaint/Services/Audio/MixerRender.swift
-        Sources/Vorssaint/Services/Audio/PreciseVolumeRollerSupport.swift
-        Sources/Vorssaint/Services/DockPreview/DockPreviewSupport.swift
-        Sources/Vorssaint/Services/DockPreview/DockAutohideHold.swift
-        Sources/Vorssaint/Services/SpacesOrder/SpacesOrderHold.swift
-        Sources/Vorssaint/Services/Homebrew/HomebrewSupport.swift
-        Sources/Vorssaint/Services/Homebrew/HomebrewEnvironment.swift
-        Sources/Vorssaint/Services/AppUpdates/AppUpdatesSupport.swift
-        Sources/Vorssaint/Services/AppUpdates/AppUpdateFeedSupport.swift
-        Sources/Vorssaint/Core/AppUpdateStrings.swift
-        Sources/Vorssaint/Core/DiskImageInstallerStrings.swift
-        Sources/Vorssaint/Services/DiskImageInstaller/DiskImageInstallerSupport.swift
-        Sources/Vorssaint/UI/NonModalAlert.swift
-        Sources/Vorssaint/Services/Clipboard/ClipboardHistorySupport.swift
-        Sources/Vorssaint/Core/ColorValue.swift
-        Sources/Vorssaint/Services/Clipboard/ClipboardAutoClearSupport.swift
-        Sources/Vorssaint/Services/AutoQuit/AutoQuitSupport.swift
-        Sources/Vorssaint/Services/Shelf/ShelfSupport.swift
-        Sources/Vorssaint/Services/Shelf/ShelfFilePromiseTransfer.swift
-        Sources/Vorssaint/Core/ShelfPromiseDeliveryStrings.swift
-        Sources/Vorssaint/Services/Finder/FinderRenameSupport.swift
-        Sources/Vorssaint/Services/Update/UpdateInstallerSupport.swift
-        Sources/Vorssaint/Services/Update/UpdateServiceSupport.swift
-        Sources/Vorssaint/Services/InstalledApps.swift
-        Sources/Vorssaint/Services/LaunchAtLoginSupport.swift
-        Sources/Vorssaint/UI/Settings/SettingsSearchSupport.swift
-        Sources/Vorssaint/UI/Settings/SettingsSidebarSupport.swift
-        Sources/Vorssaint/UI/Settings/FeatureVisibilitySupport.swift
-        Sources/Vorssaint/UI/Settings/SettingsWindow.swift
-        Sources/Vorssaint/Core/SettingsNavigationStrings.swift
-        Sources/Vorssaint/App/MenuBarSpacingSupport.swift
-        Sources/Vorssaint/App/MenuBarAllowanceSupport.swift
-        Sources/Vorssaint/App/ReopenRequestSupport.swift
-        Sources/Vorssaint/App/StatusItemAnchorSupport.swift
-        Sources/Vorssaint/Services/DockClick/DockClickSupport.swift
-        Sources/Vorssaint/Services/Finder/CutPasteProgressSupport.swift
-        Sources/Vorssaint/Services/Finder/CutPastePrivilegeSupport.swift
-        Sources/Vorssaint/Services/Finder/FinderPasteImageSupport.swift
-        Sources/Vorssaint/Services/MiddleClick/MiddleClickSupport.swift
-        Sources/Vorssaint/Services/MouseNavigation/MouseNavigationSupport.swift
-        Sources/Vorssaint/Services/MouseNavigation/MouseNavigationKeys.swift
-        Sources/Vorssaint/Services/MouseButtons/MouseButtonShortcutSupport.swift
-        Sources/Vorssaint/Services/MouseButtons/MouseSpacesGestureSupport.swift
-        Sources/Vorssaint/Services/MouseClickDebounce/MouseClickDebounceSupport.swift
-        Sources/Vorssaint/Services/MouseExceptions/MouseAppExceptionSupport.swift
-        Sources/Vorssaint/Services/MouseExceptions/MouseAppExceptions.swift
-        Sources/Vorssaint/Services/WindowServerSupport.swift
-        Sources/Vorssaint/Services/WindowMaximizerSupport.swift
-        Sources/Vorssaint/Core/MouseButtonStrings.swift
-        Sources/Vorssaint/Core/MouseClickDebounceStrings.swift
-        Sources/Vorssaint/Core/MouseExceptionStrings.swift
-        Sources/Vorssaint/Core/ClipboardIgnoredAppsStrings.swift
-        Sources/Vorssaint/Core/WindowLayoutIgnoredAppsStrings.swift
-        Sources/Vorssaint/Services/WindowLayout/WindowLayoutIgnoredApps.swift
-        Sources/Vorssaint/Core/WindowPreviewExclusionStrings.swift
-        Sources/Vorssaint/Core/WindowMaximizerExclusionStrings.swift
-        Sources/Vorssaint/Core/DiskExclusionStrings.swift
-        Sources/Vorssaint/Core/SwitcherAppRulesStrings.swift
-        Sources/Vorssaint/Services/QuickTools/QuickToolsSupport.swift
-        Sources/Vorssaint/Services/CommandBar/CommandBarSupport.swift
-        Sources/Vorssaint/Services/CommandBar/CommandBarPreferences.swift
-        Sources/Vorssaint/Services/CommandBar/CommandBarMath.swift
-        Sources/Vorssaint/Services/CommandBar/CommandBarUnits.swift
-        Sources/Vorssaint/Services/CommandBar/CommandBarColors.swift
-        Sources/Vorssaint/Services/CommandBar/CommandBarEmoji.swift
-        Sources/Vorssaint/Services/CommandBar/CommandBarLinks.swift
-        Sources/Vorssaint/Services/CommandBar/CommandBarDates.swift
-        Sources/Vorssaint/Services/CommandBar/CommandBarRowShortcuts.swift
-        Sources/Vorssaint/Services/CommandBar/CommandBarSystemSettingsSupport.swift
-        Sources/Vorssaint/Services/CommandBar/CommandBarFileSearchSupport.swift
-        Sources/Vorssaint/Services/CommandBar/CommandBarQueryMemory.swift
-        Sources/Vorssaint/Services/SpotlightNamesSupport.swift
-        Sources/Vorssaint/Services/QuickTools/MicMuteSupport.swift
-        Sources/Vorssaint/Services/QuickTools/QuickTogglesSupport.swift
-        Sources/Vorssaint/Services/QuickTools/ScreenshotCapturePolicy.swift
-        Sources/Vorssaint/Services/QuickTools/ScreenshotSupport.swift
-        Sources/Vorssaint/UI/Settings/ScreenCaptureToolPicker.swift
-        Sources/Vorssaint/UI/Settings/MonitorToken.swift
-        Sources/Vorssaint/Services/QuickTools/ScreenshotRenderer.swift
-        Sources/Vorssaint/Services/QuickTools/RecentCaptureStore.swift
-        Sources/Vorssaint/Services/QuickTools/ScreenshotSharingSupport.swift
-        Sources/Vorssaint/Services/QuickTools/WindowActivationPolicy.swift
-        Sources/Vorssaint/Services/KeyboardDebounce/KeyboardDebounceSupport.swift
-        Sources/Vorssaint/Services/SuperKey/SuperKeySupport.swift
-        Sources/Vorssaint/Services/SuperKey/SuperKeyMappingGuard.swift
-        Sources/Vorssaint/Core/SuperKeyStrings.swift
-        Sources/Vorssaint/Core/InputSourceSelection.swift
-        Sources/Vorssaint/Services/SessionActivity.swift
-        Sources/Vorssaint/Services/SessionActivitySupport.swift
-        Sources/Vorssaint/Services/EventTimestamp.swift
-        Sources/Vorssaint/Services/OwnKeyEvent.swift
-        Sources/Vorssaint/Services/ScrollWheelSupport.swift
-        Sources/Vorssaint/Services/HorizontalWheelScrolling.swift
-        Sources/Vorssaint/Services/SmoothScrollSupport.swift
-        Sources/Vorssaint/Services/MouseAcceleration/MouseAccelerationSupport.swift
-        Sources/Vorssaint/Services/FocusFollowsMouse/FocusFollowsMouseSupport.swift
-        Sources/Vorssaint/Services/AssistiveKeyboard.swift
-        Sources/Vorssaint/Services/Switcher/SwitcherModels.swift
-        Sources/Vorssaint/Services/Switcher/WindowServerCaptureQueue.swift
-        Sources/Vorssaint/Services/Switcher/SwitcherSupport.swift
-        Sources/Vorssaint/Services/Switcher/SpaceHopSupport.swift
-        Sources/Vorssaint/Services/Switcher/WindowUseOrder.swift
-        Sources/Vorssaint/Services/Metrics/MetricFormat.swift
-        Sources/Vorssaint/Services/Metrics/VMStatisticsDecoder.swift
-        Sources/Vorssaint/Services/KeepAwakeAutomationSupport.swift
-        Sources/Vorssaint/Services/SudoersSupport.swift
-        Sources/Vorssaint/Services/Metrics/BatteryTimeSupport.swift
-        Sources/Vorssaint/Services/Metrics/BatteryPowerSupport.swift
-        Sources/Vorssaint/Services/BoundedProcessRunner.swift
-        Sources/Vorssaint/Services/DetachedProcess.swift
-        Sources/Vorssaint/Services/ShellSupport.swift
-        Sources/Vorssaint/Services/PortManager/PortManagerSupport.swift
-        Sources/Vorssaint/Services/Metrics/NetworkProcessSupport.swift
-        Sources/Vorssaint/Services/Metrics/NetworkSampler.swift
-        Sources/Vorssaint/Services/Metrics/NetworkAddressService.swift
-        Sources/Vorssaint/Services/Metrics/SpeedTest.swift
-        Sources/Vorssaint/Services/Metrics/PeripheralBatterySampler.swift
-        Sources/Vorssaint/Services/Metrics/PeripheralBatterySupport.swift
-        Sources/Vorssaint/Services/Metrics/DiskSupport.swift
-        Sources/Vorssaint/Services/Metrics/MonitorSamplingPolicy.swift
-        Sources/Vorssaint/Services/Metrics/USBDeviceSampler.swift
-        Sources/Vorssaint/Services/Metrics/CPUCoreSampler.swift
-        Sources/Vorssaint/Services/Metrics/MaxCapacityProbe.swift
-        Sources/Vorssaint/Services/Metrics/TemperatureSensorSelector.swift
-        Sources/Vorssaint/Services/Metrics/SustainedAlertGate.swift
-        Sources/Vorssaint/Services/WindowLayout/WindowLayoutSupport.swift
-        Sources/Vorssaint/Services/WindowLayout/WindowGestureSupport.swift
-        Sources/Vorssaint/Core/WindowDirectionalStrings.swift
-        Sources/Vorssaint/Core/PointerDisplayStrings.swift
-        Sources/Vorssaint/Core/GraphScaleStrings.swift
-        Sources/Vorssaint/Core/NotchLowBatteryStrings.swift
-        Sources/Vorssaint/Services/CleaningMode/CleaningUnlockCounter.swift
-        Sources/Vorssaint/Services/CleaningMode/CleaningMouseReleaseGate.swift
-        Sources/Vorssaint/Services/Display/ExtraBrightnessSupport.swift
-        Sources/Vorssaint/Services/Display/BrightnessSupport.swift
-        Sources/Vorssaint/Services/Display/LidDimmingSupport.swift
-        Sources/Vorssaint/Services/Cleaner/CleanerSupport.swift
-        Sources/Vorssaint/Services/Cleaner/CleanerPolicy.swift
-        Sources/Vorssaint/Services/Cleaner/CleanerSchedule.swift
-        Sources/Vorssaint/Services/Uninstall/UninstallerSupport.swift
-        Sources/Vorssaint/Services/ManagedDownloads/WhatsAppDownloadSupport.swift
-        Sources/Vorssaint/Core/SecureInputSupport.swift
+        Sources/Breeze/Services/Media/MediaSupport.swift
+        Sources/Breeze/Core/QuitProtectionSupport.swift
+        Sources/Breeze/Core/QuitProtectionStrings.swift
+        Sources/Breeze/Core/Defaults.swift
+        Sources/Breeze/Core/NotchStrings.swift
+        Sources/Breeze/Core/NotchTourStrings.swift
+        Sources/Breeze/Core/NotchEditorStrings.swift
+        Sources/Breeze/UI/Settings/NotchSettingsTabRow.swift
+        Sources/Breeze/Core/NotchActivityStrings.swift
+        Sources/Breeze/Services/Notch/NotchTimerSupport.swift
+        Sources/Breeze/Services/Notch/NotchTimerAlert.swift
+        Sources/Breeze/UI/Notch/NotchIslandAlert.swift
+        Sources/Breeze/Services/Notch/NotchAccessorySupport.swift
+        Sources/Breeze/Services/QuickTools/CameraPreviewSupport.swift
+        Sources/Breeze/Core/NotchMusicExtrasStrings.swift
+        Sources/Breeze/Services/Notch/NotchLyricsSupport.swift
+        Sources/Breeze/Services/Notch/NotchQueueSupport.swift
+        Sources/Breeze/Services/Notch/NotchPreferredPlayer.swift
+        Sources/Breeze/Core/NotchFilesStrings.swift
+        Sources/Breeze/Core/NotchWatchStrings.swift
+        Sources/Breeze/Services/Notch/NotchWatchSupport.swift
+        Sources/Breeze/Core/NotchMascotStrings.swift
+        Sources/Breeze/Services/Notch/NotchMascotSupport.swift
+        Sources/Breeze/Services/CommandBar/CommandBarDropletMotion.swift
+        Sources/Breeze/Services/Notch/NotchFileToolsSupport.swift
+        Sources/Breeze/Services/Notch/NotchDownloadSupport.swift
+        Sources/Breeze/Services/Notch/NotchDownloadProgressObserver.swift
+        Sources/Breeze/Core/NotchCalendarStrings.swift
+        Sources/Breeze/Core/NotchNotificationStrings.swift
+        Sources/Breeze/Core/NotchGestureStrings.swift
+        Sources/Breeze/Core/NotchAgentStrings.swift
+        Sources/Breeze/Services/Notch/NotchAgentSupport.swift
+        Sources/Breeze/Core/NotchLockScreenStrings.swift
+        Sources/Breeze/Services/Notch/NotchLockScreenSupport.swift
+        Sources/Breeze/Services/AgentUsage/AgentUsageModels.swift
+        Sources/Breeze/Services/AgentUsage/AgentPricing.swift
+        Sources/Breeze/Services/AgentUsage/AgentLogObject.swift
+        Sources/Breeze/Services/AgentUsage/AgentLogParser.swift
+        Sources/Breeze/Services/AgentUsage/AgentUsageSummary.swift
+        Sources/Breeze/Services/AgentUsage/AgentUsageStore.swift
+        Sources/Breeze/Services/AgentUsage/AgentUsageArchive.swift
+        Sources/Breeze/Services/AgentUsage/AgentClaudeAppUsage.swift
+        Sources/Breeze/Services/AgentUsage/AgentCodexServer.swift
+        Sources/Breeze/Services/AgentUsage/AgentOpenCodeReader.swift
+        Sources/Breeze/Services/Notch/NotchGestureSupport.swift
+        Sources/Breeze/Services/Notch/NotchSectionPaging.swift
+        Sources/Breeze/Services/Notch/NotchSliderEditing.swift
+        Sources/Breeze/Services/Notch/NotchNotificationSupport.swift
+        Sources/Breeze/Services/Notch/NotchNotificationReaderCore.swift
+        Sources/Breeze/Services/Notch/NotchCalendarSupport.swift
+        Sources/Breeze/Services/Notch/NotchKeepAwakeSupport.swift
+        Sources/Breeze/Services/Notch/NotchSupport.swift
+        Sources/Breeze/Services/Notch/NotchAudioLevelSupport.swift
+        Sources/Breeze/Services/Notch/NotchVolumeKeyGate.swift
+        Sources/Breeze/Services/Notch/NotchMusicSupport.swift
+        Sources/Breeze/UI/Notch/NotchDecorativeClock.swift
+        Sources/Breeze/UI/Notch/NotchEqualizerBars.swift
+        Sources/Breeze/UI/Notch/NotchScrollEdgeFade.swift
+        Sources/Breeze/UI/Notch/NotchAgentAnimationView.swift
+        Sources/Breeze/UI/WindowVisibilityReader.swift
+        Sources/Breeze/Services/Notch/NotchMusicAutomationSupport.swift
+        Sources/Breeze/Services/Notch/NotchMusicAutomation.swift
+        Sources/Breeze/Services/Notch/NotchPlaybackSource.swift
+        Sources/Breeze/Services/Notch/NotchPlaybackCommand.swift
+        Sources/Breeze/Services/Notch/NotchMusicCommandWriter.swift
+        Sources/Breeze/Core/FeatureCatalog.swift
+        Sources/Breeze/Core/FeaturePresets.swift
+        Sources/Breeze/Core/FeatureHubStrings.swift
+        Sources/Breeze/Core/ShortcutSettingsStrings.swift
+        Sources/Breeze/Core/SettingsBackupSupport.swift
+        Sources/Breeze/Core/BackupStrings.swift
+        Sources/Breeze/Core/SnippetStrings.swift
+        Sources/Breeze/Core/AlertSoundStrings.swift
+        Sources/Breeze/Core/BrightnessStrings.swift
+        Sources/Breeze/Core/MediaImageStrings.swift
+        Sources/Breeze/Core/QuickToggleStrings.swift
+        Sources/Breeze/Core/ScreenshotStrings.swift
+        Sources/Breeze/Core/RecentCaptureStrings.swift
+        Sources/Breeze/Core/RecorderStrings.swift
+        Sources/Breeze/Core/RecorderShareStrings.swift
+        Sources/Breeze/Core/CameraPreviewStrings.swift
+        Sources/Breeze/Core/WallpaperStrings.swift
+        Sources/Breeze/Services/Wallpaper/WallpaperSupport.swift
+        Sources/Breeze/Core/ScratchpadStrings.swift
+        Sources/Breeze/Core/FinderRenameStrings.swift
+        Sources/Breeze/Core/CommandBarStrings.swift
+        Sources/Breeze/Core/FeedbackStrings.swift
+        Sources/Breeze/Core/RadialMenuStrings.swift
+        Sources/Breeze/Core/MenuBarAppearanceStrings.swift
+        Sources/Breeze/Core/AppAppearance.swift
+        Sources/Breeze/Core/AppearanceStrings.swift
+        Sources/Breeze/Core/GeneralSettingsStrings.swift
+        Sources/Breeze/Core/SettingsPageStrings.swift
+        Sources/Breeze/Core/BatteryTimeStrings.swift
+        Sources/Breeze/Core/CPUCoreStrings.swift
+        Sources/Breeze/Core/MonitorLayoutStrings.swift
+        Sources/Breeze/Core/KeepAwakeStrings.swift
+        Sources/Breeze/Core/BluetoothSleepStrings.swift
+        Sources/Breeze/Core/PermissionGuideStrings.swift
+        Sources/Breeze/Core/FanControlStrings.swift
+        Sources/Breeze/Core/ConnectedDevicesStrings.swift
+        Sources/Breeze/Services/FanControl/FanControlSupport.swift
+        Sources/Breeze/Services/FanControl/FanControlResumeSupport.swift
+        Sources/Breeze/Services/Snippets/TextSnippetSupport.swift
+        Sources/Breeze/Services/RadialMenu/RadialMenuSupport.swift
+        Sources/Breeze/Services/QuickTools/ScratchpadSupport.swift
+        Sources/Breeze/Services/QuickTools/ScratchpadStore.swift
+        Sources/Breeze/Services/KillProcess/KillProcessSupport.swift
+        Sources/Breeze/Services/Recorder/RecorderSupport.swift
+        Sources/Breeze/Services/Recorder/RecorderSampleTiming.swift
+        Sources/Breeze/Services/Recorder/RecorderWriter.swift
+        Sources/Breeze/Services/Recorder/RecorderCaptureEngine.swift
+        Sources/Breeze/Core/RecorderExportStrings.swift
+        Sources/Breeze/Services/Recorder/RecorderComposer.swift
+        Sources/Breeze/Services/Recorder/RecorderComposerPlan.swift
+        Sources/Breeze/Services/Recorder/RecorderCursorSprite.swift
+        Sources/Breeze/Services/Recorder/RecorderTextRenderer.swift
+        Sources/Breeze/Services/Recorder/RecorderImageRenderer.swift
+        Sources/Breeze/Services/Recorder/RecorderExporter.swift
+        Sources/Breeze/Services/Recorder/RecorderGIFClipboard.swift
+        Sources/Breeze/Services/Recorder/RecorderComposition.swift
+        Sources/Breeze/Services/Recorder/RecordingSharingSupport.swift
+        Sources/Breeze/Services/PrivateFileStore.swift
+        Sources/Breeze/Services/Recorder/RecorderTakeStore.swift
+        Sources/Breeze/Services/Recorder/RecorderPresetImageStore.swift
+        Sources/Breeze/Services/Recorder/RecorderMotion.swift
+        Sources/Breeze/Services/Recorder/RecorderPointerTrack.swift
+        Sources/Breeze/Services/Recorder/RecorderTypingTrack.swift
+        Sources/Breeze/Services/Recorder/RecorderTimeline.swift
+        Sources/Breeze/Services/Recorder/RecorderTextOverlay.swift
+        Sources/Breeze/Services/Recorder/RecorderImageOverlay.swift
+        Sources/Breeze/Services/Recorder/RecorderBlurRegion.swift
+        Sources/Breeze/Services/Recorder/RecorderEditDocument.swift
+        Sources/Breeze/Core/AppInfo.swift
+        Sources/Breeze/Core/GlobalShortcut.swift
+        Sources/Breeze/Core/SymbolicHotKeys.swift
+        Sources/Breeze/Services/SystemShortcutTakeoverSupport.swift
+        Sources/Breeze/Core/Localization.swift
+        Sources/Breeze/Core/Localizations/Strings+*.swift
+        Sources/Breeze/Core/FeatureStrings.swift
+        Sources/Breeze/Core/KillProcessStrings.swift
+        Sources/Breeze/Core/PortManagerStrings.swift
+        Sources/Breeze/Core/WhatsAppDownloadStrings.swift
+        Sources/Breeze/Core/WhatsAppOrganizerStrings.swift
+        Sources/Breeze/Core/ReleaseNotes.swift
+        Sources/Breeze/Core/URLCleaning.swift
+        Sources/Breeze/Services/GeneralPasteboardAccess.swift
+        Sources/Breeze/Services/Clipboard/ClipboardHistoryWrite.swift
+        Sources/Breeze/Services/Audio/AirPlayRouteManager.swift
+        Sources/Breeze/Services/Audio/MixerRoutingSupport.swift
+        Sources/Breeze/Services/Audio/MusicLaunchSupport.swift
+        Sources/Breeze/Services/Bluetooth/BluetoothSleepSupport.swift
+        Sources/Breeze/UI/MenuPanel/MixerPercentNativeTextField.swift
+        Sources/Breeze/UI/MenuPanel/MixerAppDragSource.swift
+        Sources/Breeze/Services/Audio/BoostLimiter.swift
+        Sources/Breeze/Services/Audio/MixerRender.swift
+        Sources/Breeze/Services/Audio/PreciseVolumeRollerSupport.swift
+        Sources/Breeze/Services/DockPreview/DockPreviewSupport.swift
+        Sources/Breeze/Services/DockPreview/DockAutohideHold.swift
+        Sources/Breeze/Services/SpacesOrder/SpacesOrderHold.swift
+        Sources/Breeze/Services/Homebrew/HomebrewSupport.swift
+        Sources/Breeze/Services/Homebrew/HomebrewEnvironment.swift
+        Sources/Breeze/Services/AppUpdates/AppUpdatesSupport.swift
+        Sources/Breeze/Services/AppUpdates/AppUpdateFeedSupport.swift
+        Sources/Breeze/Core/AppUpdateStrings.swift
+        Sources/Breeze/Core/DiskImageInstallerStrings.swift
+        Sources/Breeze/Services/DiskImageInstaller/DiskImageInstallerSupport.swift
+        Sources/Breeze/UI/NonModalAlert.swift
+        Sources/Breeze/Services/Clipboard/ClipboardHistorySupport.swift
+        Sources/Breeze/Core/ColorValue.swift
+        Sources/Breeze/Services/Clipboard/ClipboardAutoClearSupport.swift
+        Sources/Breeze/Services/AutoQuit/AutoQuitSupport.swift
+        Sources/Breeze/Services/Shelf/ShelfSupport.swift
+        Sources/Breeze/Services/Shelf/ShelfFilePromiseTransfer.swift
+        Sources/Breeze/Core/ShelfPromiseDeliveryStrings.swift
+        Sources/Breeze/Services/Finder/FinderRenameSupport.swift
+        Sources/Breeze/Services/Update/UpdateInstallerSupport.swift
+        Sources/Breeze/Services/Update/UpdateServiceSupport.swift
+        Sources/Breeze/Services/InstalledApps.swift
+        Sources/Breeze/Services/LaunchAtLoginSupport.swift
+        Sources/Breeze/UI/Settings/SettingsSearchSupport.swift
+        Sources/Breeze/UI/Settings/SettingsSidebarSupport.swift
+        Sources/Breeze/UI/Settings/FeatureVisibilitySupport.swift
+        Sources/Breeze/UI/Settings/SettingsWindow.swift
+        Sources/Breeze/Core/SettingsNavigationStrings.swift
+        Sources/Breeze/App/MenuBarSpacingSupport.swift
+        Sources/Breeze/App/MenuBarAllowanceSupport.swift
+        Sources/Breeze/App/ReopenRequestSupport.swift
+        Sources/Breeze/App/StatusItemAnchorSupport.swift
+        Sources/Breeze/Services/DockClick/DockClickSupport.swift
+        Sources/Breeze/Services/Finder/CutPasteProgressSupport.swift
+        Sources/Breeze/Services/Finder/CutPastePrivilegeSupport.swift
+        Sources/Breeze/Services/Finder/FinderPasteImageSupport.swift
+        Sources/Breeze/Services/MiddleClick/MiddleClickSupport.swift
+        Sources/Breeze/Services/MouseNavigation/MouseNavigationSupport.swift
+        Sources/Breeze/Services/MouseNavigation/MouseNavigationKeys.swift
+        Sources/Breeze/Services/MouseButtons/MouseButtonShortcutSupport.swift
+        Sources/Breeze/Services/MouseButtons/MouseSpacesGestureSupport.swift
+        Sources/Breeze/Services/MouseClickDebounce/MouseClickDebounceSupport.swift
+        Sources/Breeze/Services/MouseExceptions/MouseAppExceptionSupport.swift
+        Sources/Breeze/Services/MouseExceptions/MouseAppExceptions.swift
+        Sources/Breeze/Services/WindowServerSupport.swift
+        Sources/Breeze/Services/WindowMaximizerSupport.swift
+        Sources/Breeze/Core/MouseButtonStrings.swift
+        Sources/Breeze/Core/MouseClickDebounceStrings.swift
+        Sources/Breeze/Core/MouseExceptionStrings.swift
+        Sources/Breeze/Core/ClipboardIgnoredAppsStrings.swift
+        Sources/Breeze/Core/WindowLayoutIgnoredAppsStrings.swift
+        Sources/Breeze/Services/WindowLayout/WindowLayoutIgnoredApps.swift
+        Sources/Breeze/Core/WindowPreviewExclusionStrings.swift
+        Sources/Breeze/Core/WindowMaximizerExclusionStrings.swift
+        Sources/Breeze/Core/DiskExclusionStrings.swift
+        Sources/Breeze/Core/SwitcherAppRulesStrings.swift
+        Sources/Breeze/Services/QuickTools/QuickToolsSupport.swift
+        Sources/Breeze/Services/CommandBar/CommandBarSupport.swift
+        Sources/Breeze/Services/CommandBar/CommandBarPreferences.swift
+        Sources/Breeze/Services/CommandBar/CommandBarMath.swift
+        Sources/Breeze/Services/CommandBar/CommandBarUnits.swift
+        Sources/Breeze/Services/CommandBar/CommandBarColors.swift
+        Sources/Breeze/Services/CommandBar/CommandBarEmoji.swift
+        Sources/Breeze/Services/CommandBar/CommandBarLinks.swift
+        Sources/Breeze/Services/CommandBar/CommandBarDates.swift
+        Sources/Breeze/Services/CommandBar/CommandBarRowShortcuts.swift
+        Sources/Breeze/Services/CommandBar/CommandBarSystemSettingsSupport.swift
+        Sources/Breeze/Services/CommandBar/CommandBarFileSearchSupport.swift
+        Sources/Breeze/Services/CommandBar/CommandBarQueryMemory.swift
+        Sources/Breeze/Services/SpotlightNamesSupport.swift
+        Sources/Breeze/Services/QuickTools/MicMuteSupport.swift
+        Sources/Breeze/Services/QuickTools/QuickTogglesSupport.swift
+        Sources/Breeze/Services/QuickTools/ScreenshotCapturePolicy.swift
+        Sources/Breeze/Services/QuickTools/ScreenshotSupport.swift
+        Sources/Breeze/UI/Settings/ScreenCaptureToolPicker.swift
+        Sources/Breeze/UI/Settings/MonitorToken.swift
+        Sources/Breeze/Services/QuickTools/ScreenshotRenderer.swift
+        Sources/Breeze/Services/QuickTools/RecentCaptureStore.swift
+        Sources/Breeze/Services/QuickTools/ScreenshotSharingSupport.swift
+        Sources/Breeze/Services/QuickTools/WindowActivationPolicy.swift
+        Sources/Breeze/Services/KeyboardDebounce/KeyboardDebounceSupport.swift
+        Sources/Breeze/Services/SuperKey/SuperKeySupport.swift
+        Sources/Breeze/Services/SuperKey/SuperKeyMappingGuard.swift
+        Sources/Breeze/Core/SuperKeyStrings.swift
+        Sources/Breeze/Core/InputSourceSelection.swift
+        Sources/Breeze/Services/SessionActivity.swift
+        Sources/Breeze/Services/SessionActivitySupport.swift
+        Sources/Breeze/Services/EventTimestamp.swift
+        Sources/Breeze/Services/OwnKeyEvent.swift
+        Sources/Breeze/Services/ScrollWheelSupport.swift
+        Sources/Breeze/Services/HorizontalWheelScrolling.swift
+        Sources/Breeze/Services/SmoothScrollSupport.swift
+        Sources/Breeze/Services/MouseAcceleration/MouseAccelerationSupport.swift
+        Sources/Breeze/Services/FocusFollowsMouse/FocusFollowsMouseSupport.swift
+        Sources/Breeze/Services/AssistiveKeyboard.swift
+        Sources/Breeze/Services/Switcher/SwitcherModels.swift
+        Sources/Breeze/Services/Switcher/WindowServerCaptureQueue.swift
+        Sources/Breeze/Services/Switcher/SwitcherSupport.swift
+        Sources/Breeze/Services/Switcher/SpaceHopSupport.swift
+        Sources/Breeze/Services/Switcher/WindowUseOrder.swift
+        Sources/Breeze/Services/Metrics/MetricFormat.swift
+        Sources/Breeze/Services/Metrics/VMStatisticsDecoder.swift
+        Sources/Breeze/Services/KeepAwakeAutomationSupport.swift
+        Sources/Breeze/Services/SudoersSupport.swift
+        Sources/Breeze/Services/Metrics/BatteryTimeSupport.swift
+        Sources/Breeze/Services/Metrics/BatteryPowerSupport.swift
+        Sources/Breeze/Services/BoundedProcessRunner.swift
+        Sources/Breeze/Services/DetachedProcess.swift
+        Sources/Breeze/Services/ShellSupport.swift
+        Sources/Breeze/Services/PortManager/PortManagerSupport.swift
+        Sources/Breeze/Services/Metrics/NetworkProcessSupport.swift
+        Sources/Breeze/Services/Metrics/NetworkSampler.swift
+        Sources/Breeze/Services/Metrics/NetworkAddressService.swift
+        Sources/Breeze/Services/Metrics/SpeedTest.swift
+        Sources/Breeze/Services/Metrics/PeripheralBatterySampler.swift
+        Sources/Breeze/Services/Metrics/PeripheralBatterySupport.swift
+        Sources/Breeze/Services/Metrics/DiskSupport.swift
+        Sources/Breeze/Services/Metrics/MonitorSamplingPolicy.swift
+        Sources/Breeze/Services/Metrics/USBDeviceSampler.swift
+        Sources/Breeze/Services/Metrics/CPUCoreSampler.swift
+        Sources/Breeze/Services/Metrics/MaxCapacityProbe.swift
+        Sources/Breeze/Services/Metrics/TemperatureSensorSelector.swift
+        Sources/Breeze/Services/Metrics/SustainedAlertGate.swift
+        Sources/Breeze/Services/WindowLayout/WindowLayoutSupport.swift
+        Sources/Breeze/Services/WindowLayout/WindowGestureSupport.swift
+        Sources/Breeze/Core/WindowDirectionalStrings.swift
+        Sources/Breeze/Core/PointerDisplayStrings.swift
+        Sources/Breeze/Core/GraphScaleStrings.swift
+        Sources/Breeze/Core/NotchLowBatteryStrings.swift
+        Sources/Breeze/Services/CleaningMode/CleaningUnlockCounter.swift
+        Sources/Breeze/Services/CleaningMode/CleaningMouseReleaseGate.swift
+        Sources/Breeze/Services/Display/ExtraBrightnessSupport.swift
+        Sources/Breeze/Services/Display/BrightnessSupport.swift
+        Sources/Breeze/Services/Display/LidDimmingSupport.swift
+        Sources/Breeze/Services/Cleaner/CleanerSupport.swift
+        Sources/Breeze/Services/Cleaner/CleanerPolicy.swift
+        Sources/Breeze/Services/Cleaner/CleanerSchedule.swift
+        Sources/Breeze/Services/Uninstall/UninstallerSupport.swift
+        Sources/Breeze/Services/ManagedDownloads/WhatsAppDownloadSupport.swift
+        Sources/Breeze/Core/SecureInputSupport.swift
         Tests/*.swift
         build/generated-tests/*.swift
     )
@@ -578,7 +578,7 @@ if (( TEST )); then
     write_swift_output_file_map "$TEST_OUTPUT_FILE_MAP" "$TEST_OBJECT_DIR" "${TEST_SOURCES[@]}"
     echo "▸ Building & running tests against $(basename "$SDK")…"
     swiftc -Onone -incremental -enable-batch-mode -j "$(sysctl -n hw.logicalcpu)" \
-        -module-name VorssaintTests -output-file-map "$TEST_OUTPUT_FILE_MAP" \
+        -module-name BreezeTests -output-file-map "$TEST_OUTPUT_FILE_MAP" \
         -target "$NATIVE_TARGET" -sdk "$SDK" "${SDK_COMPAT_FLAGS[@]}" \
         "${VM_STATISTICS_COMPAT_FLAGS[@]}" "${TEST_SOURCES[@]}" -o build/metrics-tests
     test_status=0
@@ -593,7 +593,7 @@ if (( TEST )); then
 fi
 
 echo "▸ Compiling ($BUILD_CONFIGURATION) against $(basename "$SDK")…"
-APP_SOURCES=(Sources/Vorssaint/**/*.swift)
+APP_SOURCES=(Sources/Breeze/**/*.swift)
 if (( ! DEV )); then
     # A release starts from an empty build directory, so nothing an earlier
     # build left behind (an old icon catalog, a staged bundle) can reach it.
@@ -619,22 +619,22 @@ build_universal "build/$EXECUTABLE" \
 echo "▸ Compiling protected fan helper…"
 build_universal "build/$FAN_HELPER_ID" \
     -O "${BUILD_VARIANT_FLAGS[@]}" \
-    Sources/Vorssaint/Services/FanControl/FanControlSupport.swift \
-    Sources/Vorssaint/Services/FanControl/FanControlXPC.swift \
-    Sources/Vorssaint/Services/SystemMonitor/SMCClient.swift \
-    Sources/Vorssaint/Services/Metrics/TemperatureSensorSelector.swift \
-    Sources/Vorssaint/Services/FanControl/FanControlHardware.swift \
+    Sources/Breeze/Services/FanControl/FanControlSupport.swift \
+    Sources/Breeze/Services/FanControl/FanControlXPC.swift \
+    Sources/Breeze/Services/SystemMonitor/SMCClient.swift \
+    Sources/Breeze/Services/Metrics/TemperatureSensorSelector.swift \
+    Sources/Breeze/Services/FanControl/FanControlHardware.swift \
     Sources/FanControlHelper/main.swift
 "build/$FAN_HELPER_ID" --selftest
 
 echo "▸ Compiling Now Playing adapter…"
 build_universal "build/$NOW_PLAYING_ADAPTER" \
-    -O -emit-library -module-name VorssaintNowPlaying \
+    -O -emit-library -module-name BreezeNowPlaying \
     Sources/NowPlayingAdapter/NowPlayingAdapter.swift \
     Sources/NowPlayingAdapter/NowPlayingQueue.swift \
     Sources/NowPlayingAdapter/NowPlayingSelection.swift \
-    Sources/Vorssaint/Services/Notch/NotchPlaybackSource.swift \
-    Sources/Vorssaint/Services/Notch/NotchPlaybackCommand.swift
+    Sources/Breeze/Services/Notch/NotchPlaybackSource.swift \
+    Sources/Breeze/Services/Notch/NotchPlaybackCommand.swift
 
 echo "▸ Generating app icon…"
 swift Tools/MakeIcon.swift build/AppIcon.iconset
@@ -679,7 +679,7 @@ mkdir -p "$STAGE/Contents/Frameworks"
 cp "build/$NOW_PLAYING_ADAPTER" "$STAGE/Contents/Frameworks/$NOW_PLAYING_ADAPTER"
 cp Resources/now-playing.pl "$STAGE/Contents/Resources/now-playing.pl"
 cp Resources/agent-prices.json "$STAGE/Contents/Resources/agent-prices.json"
-cp Resources/com.vorssaint.utils.fan-control.plist \
+cp Resources/com.kevsketch.breeze.utils.fan-control.plist \
     "$STAGE/Contents/Library/LaunchDaemons/$FAN_HELPER_ID.plist"
 cp Resources/Info.plist "$STAGE/Contents/Info.plist"
 cp CHANGELOG.md "$STAGE/Contents/Resources/CHANGELOG.md"
@@ -696,14 +696,14 @@ if (( DEV )); then
     FAN_PLIST="$STAGE/Contents/Library/LaunchDaemons/$FAN_HELPER_ID.plist"
     /usr/libexec/PlistBuddy -c "Set :Label $FAN_HELPER_ID" "$FAN_PLIST"
     /usr/libexec/PlistBuddy -c "Set :BundleProgram Contents/Library/LaunchServices/$FAN_HELPER_ID" "$FAN_PLIST"
-    /usr/libexec/PlistBuddy -c "Delete :MachServices:com.vorssaint.utils.fan-control" "$FAN_PLIST"
+    /usr/libexec/PlistBuddy -c "Delete :MachServices:com.kevsketch.breeze.utils.fan-control" "$FAN_PLIST"
     /usr/libexec/PlistBuddy -c "Add :MachServices:$FAN_HELPER_ID bool true" "$FAN_PLIST"
     # Stamp the source commit + build time so the running dev app shows (in About)
     # exactly which code it was compiled from. Lets you verify it matches HEAD before
     # testing, instead of unknowingly running a stale build. Dev-only; never shipped.
     SHA="$(git rev-parse --short HEAD 2>/dev/null || echo unknown)"
     [[ -n "$(git status --porcelain 2>/dev/null)" ]] && SHA="$SHA-dirty"
-    /usr/libexec/PlistBuddy -c "Add :VorssaintBuildCommit string '$SHA · $(date '+%Y-%m-%d %H:%M')'" "$STAGE/Contents/Info.plist"
+    /usr/libexec/PlistBuddy -c "Add :BreezeBuildCommit string '$SHA · $(date '+%Y-%m-%d %H:%M')'" "$STAGE/Contents/Info.plist"
     echo "  stamped dev build: $SHA"
 fi
 FAN_HELPER_VERSION="$(
@@ -714,7 +714,7 @@ FAN_HELPER_VERSION="$(
         | /usr/bin/awk '{print $1}' | /usr/bin/shasum -a 256 \
         | /usr/bin/awk '{print $1}'
 )"
-/usr/libexec/PlistBuddy -c "Add :VorssaintFanControlHelperVersion string '$FAN_HELPER_VERSION'" \
+/usr/libexec/PlistBuddy -c "Add :BreezeFanControlHelperVersion string '$FAN_HELPER_VERSION'" \
     "$STAGE/Contents/Info.plist"
 printf 'APPL????' > "$STAGE/Contents/PkgInfo"
 cp build/AppIcon.icns "$STAGE/Contents/Resources/AppIcon.icns"
@@ -742,7 +742,7 @@ xattr -c -r "$STAGE" 2>/dev/null || true
 #      notarization), the app's entitlements and a secure timestamp. Gives a
 #      stable, team-based designated requirement, so permissions persist across
 #      updates AND Gatekeeper shows no "unverified developer" warning.
-#   2. "Vorssaint Utils Signing" — the legacy stable self-signed identity, kept
+#   2. "Breeze Signing" — the legacy stable self-signed identity, kept
 #      as a fallback so contributors without a Developer ID still get a constant
 #      designated requirement across their local builds.
 #   3. Ad-hoc — fresh clone with no identity at all.
@@ -903,9 +903,9 @@ if (( INSTALL )); then
     echo "▸ Installing into /Applications…"
     stop_process "$EXECUTABLE"
     # Only an official install replaces the pre-rename official apps. The
-    # Developer variant must coexist with them just as it does with Vorssaint.
+    # Developer variant must coexist with them just as it does with Breeze.
     if (( ! DEV )); then
-        for legacy in "Vorss:Vorss" "Vorssaint Utils:VorssaintUtils"; do
+        for legacy in "Breeze:Breeze" "Breeze Utils:BreezeUtils"; do
             name="${legacy%%:*}"; proc="${legacy##*:}"
             if [[ -d "/Applications/$name.app" ]]; then
                 stop_process "$proc"
