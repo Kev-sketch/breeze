@@ -25,13 +25,13 @@
   <a href="https://github.com/Kev-sketch/breeze/releases"><img src="https://img.shields.io/github/v/release/Kev-sketch/breeze?label=release&color=4c8dff" alt="Latest release"></a>
   <a href="https://github.com/Kev-sketch/breeze/releases"><img src="https://img.shields.io/github/downloads/Kev-sketch/breeze/total?color=4c8dff" alt="Downloads"></a>
   <a href="https://github.com/Kev-sketch/breeze/actions/workflows/ci.yml"><img src="https://github.com/Kev-sketch/breeze/actions/workflows/ci.yml/badge.svg?branch=main&event=push" alt="CI status"></a>
-  <a href="#what-you-need"><img src="https://img.shields.io/badge/macOS-14%2B%20Universal-black" alt="macOS 14 and newer, Intel and Apple Silicon"></a>
+  <a href="#what-you-need"><img src="https://img.shields.io/badge/macOS-13%2B%20Universal-black" alt="macOS 13 and newer, Intel and Apple Silicon"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-GPL--3.0--or--later-blue" alt="License GPL 3.0 or later"></a>
 </p>
 
 <p align="center">
   <em>Unofficial fork of the GPL-3.0 <a href="https://github.com/vorssaint/vorssaint-utils">Vorssaint</a>
-  project, rebuilt as a universal binary (Intel + Apple Silicon) for macOS 14+.</em>
+  project, rebuilt as a universal binary (Intel + Apple Silicon) for macOS 13+.</em>
 </p>
 
 <p align="center">
@@ -162,7 +162,7 @@ open it, and drag **Breeze** into Applications.
 
 > **Unofficial fork build.** It is **ad-hoc signed**, not notarized, so macOS shows a Gatekeeper
 > warning on first launch — right-click the app and choose **Open** (or run
-> `xattr -dr com.apple.quarantine /Applications/Breeze.app`). Requires **macOS 14 or newer**.
+> `xattr -dr com.apple.quarantine /Applications/Breeze.app`). Requires **macOS 13 Ventura or newer**.
 
 ## Uninstall
 
@@ -189,13 +189,13 @@ See the [permissions guide](docs/PERMISSIONS.md) for which features need access 
 ## What you need
 
 - Any Mac — Apple Silicon **or** Intel
-- macOS 14 Sonoma or newer
+- macOS 13 Ventura or newer
 
-> **Legacy-OS port note.** This branch builds a **universal binary (Intel + Apple Silicon)**. The
-> minimum is **macOS 14 (Sonoma)** — a hard requirement of the codebase (607 macOS-14 APIs used
-> unguarded across 85 files). It does **not** reach macOS 10.0–10.14 — a SwiftUI app cannot run there
-> (SwiftUI needs 10.15; Swift needs 10.10; 10.0–10.3 are PowerPC-only). See
-> [`PORTING-macos-legacy.md`](PORTING-macos-legacy.md) for the full analysis.
+> **Legacy-OS port note.** This branch builds a **universal binary (Intel + Apple Silicon)** with a
+> minimum of **macOS 13 (Ventura)** — the macOS-14 APIs used across the codebase are covered by
+> Ventura fallbacks (see [`PORTING-macos-legacy.md`](PORTING-macos-legacy.md)). It does **not** reach
+> macOS 10.0–10.14 — a SwiftUI app cannot run there (SwiftUI needs 10.15; Swift needs 10.10; 10.0–10.3
+> are PowerPC-only).
 
 ### Build it yourself
 

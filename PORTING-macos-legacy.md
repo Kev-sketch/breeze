@@ -11,6 +11,12 @@
 > `SpringKeyframe` / `CubicKeyframe`, `onKeyPress(_:action:)`, `NSApplication.activate(from:options:)`,
 > and more. **The floor is macOS 14.0 (Sonoma)** — a hard requirement of the code. The earlier
 > "SMAppService is the youngest API (13.0)" analysis was incomplete; it missed these.
+>
+> **ADDENDUM (2026-10-12, branch `port/macos13`).** The floor is moving to **macOS 13.0 (Ventura)**
+> after all — via explicit Ventura fallbacks (`Sources/Breeze/Support/BackDeployCompat.swift`,
+> `CompatDisplayLink.swift`, `ScreenCaptureCompat.swift`) instead of the naive floor-lowering that
+> failed above. `Package.swift`, `build.sh` and `Info.plist` now declare 13.0; this doc's older
+> "floor is 14.0" statements are historical.
 
 ## 1. Summary
 
